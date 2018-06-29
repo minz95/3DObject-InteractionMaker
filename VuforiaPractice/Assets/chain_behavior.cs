@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class chain_behavior : MonoBehaviour {
     public bool selected = false;
@@ -17,14 +18,18 @@ public class chain_behavior : MonoBehaviour {
         {
             //Renderer rend = GetComponent<Renderer>();
             rend.material.color = Color.blue;
+            
             //Vector3[] vertices = GetComponent<MeshFilter>().mesh.vertices;
             Transform tr = gameObject.transform;
             for (int i = 0; i < vertices.Length; ++i)
             {
                 vertices[i] = tr.TransformPoint(vertices[i]);
             }
-            //Vector3[] verts = removeDuplicates(vertices);
-            drawSpheres(vertices);
+            List<Vector3> r_verts = new List<Vector3>(vertices);
+            
+            Vector3[] verts = r_verts.Distinct<Vector3>().ToList().ToArray();
+            //removeDuplicates(vertices);
+            drawSpheres(verts);
             selected = true;
         }
         else
@@ -71,46 +76,62 @@ public class chain_behavior : MonoBehaviour {
         for (int i = 0; i < verts.Length; i++)
         {
             Spheres[i] = Instantiate(vertex_sphere, verts[i], Quaternion.identity);
+            Spheres[i].GetComponent<Renderer>().sortingOrder = 0;
             //Spheres[i] = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             //Spheres[i].transform.position = verts[i];
             //Spheres[i].transform.localScale -= new Vector3(0.9F, 0.9F, 0.9F);
         }
-    /*
-        GameObject button = new GameObject();
+        
+        GameObject button = new GameObject("buttonObject");
+        
         button.AddComponent<MeshFilter>();
+        button.AddComponent<MeshCollider>();
+        button.AddComponent<MeshRenderer>();
         Vector3[] b_vertices = new Vector3[4];
         b_vertices[0] = verts[verts.Length - 4];
         b_vertices[1] = verts[verts.Length - 3];
         b_vertices[2] = verts[verts.Length - 2];
         b_vertices[3] = verts[verts.Length - 1];
-
+        
         Transform tr = gameObject.transform;
+        /*
         for (int i = 0; i < 4; i++)
         {
             b_vertices[i] = tr.TransformPoint(b_vertices[i]);
         }
+        */
+        
         Mesh b_mesh = button.GetComponent<MeshFilter>().mesh;
+        
+        /*
         b_mesh.vertices = b_vertices;
         b_mesh.uv = new Vector2[3]{new Vector2(0, 0), new Vector2(0, 1), new Vector2(1, 0)};
         b_mesh.triangles = new int[3] { 0, 1, 2 };
         b_mesh.RecalculateBounds();
-
+        */
         button.transform.position = verts[verts.Length - 4];
-        button.AddComponent<BoxCollider>();
-        button.AddComponent<MeshRenderer>();
+        
         button.GetComponent<Renderer>().material.color = Color.green;
+        button.GetComponent<Renderer>().sortingOrder = 0;
         //button.AddComponent<Rigidbody2D>();
         //button.GetComponent<Rigidbody2D>().AddForce(Vector2.down);
 
         Vector3[] n_vertices = new Vector3[verts.Length-4];
         Vector2[] n_uv = new Vector2[verts.Length - 4];
-        
+
         for(int i = 0; i < verts.Length-4; i++)
         {
             n_vertices[i] = verts[i];
         }
 
+        HashSet<int> vertsToRemove = new HashSet<int>();
+        vertsToRemove.Add(verts.Length - 4);
+        vertsToRemove.Add(verts.Length - 3);
+        vertsToRemove.Add(verts.Length - 2);
+        vertsToRemove.Add(verts.Length - 1);
+
         Mesh n_mesh = GetComponent<MeshFilter>().mesh;
+        
         int[] n_triangles = new int[n_mesh.triangles.Length - 3];
         for (int i = 0; i < verts.Length - 4; i++)
         {
@@ -118,17 +139,56 @@ public class chain_behavior : MonoBehaviour {
             n_uv[i] = n_mesh.uv[i];
             n_triangles[i] = n_mesh.triangles[i];
         }
+        
+        int[] indices = n_mesh.GetTriangles(0);
+        List<int> updatedIndices = new List<int>();
+        List<int> b_indices = new List<int>();
 
-        Material[] mats;
-        mats = rend.materials;
+        for (int index = 0; index < indices.Length; index += 3)
+        {
+            // Each triangle utilizes three slots in the index buffer, check to see if any of the
+            // triangle indices contain a vertex that should be removed.
+            if (vertsToRemove.Contains(indices[index]) ||
+                vertsToRemove.Contains(indices[index + 1]) ||
+                vertsToRemove.Contains(indices[index + 2]))
+            {
+                
+                // Do nothing, we don't want to save this triangle...
+            }
+            else
+            {
+                updatedIndices.Add(indices[index]);
+                updatedIndices.Add(indices[index + 1]);
+                updatedIndices.Add(indices[index + 2]);
+            }
+            
+            if(vertsToRemove.Contains(indices[index]) &&
+                vertsToRemove.Contains(indices[index + 1]) &&
+                vertsToRemove.Contains(indices[index + 2]))
+            {
+                b_indices.Add(indices[index]);
+                b_indices.Add(indices[index + 1]);
+                b_indices.Add(indices[index + 2]);
+            }
+        }
+
+        n_mesh.SetTriangles(updatedIndices.ToArray(), 0);
+        n_mesh.RecalculateBounds();
+
+        b_mesh.SetVertices(new List<Vector3>(b_vertices));
+        b_mesh.SetTriangles(b_indices.Distinct<int>().ToList().ToArray(), 0);
+        b_mesh.RecalculateBounds();
+        button.GetComponent<Renderer>().material = rend.material;
+
+        /*
         n_mesh.Clear();
         n_mesh.uv = n_uv;
         n_mesh.triangles = n_triangles;
         n_mesh.vertices = n_vertices;
-        
+
         n_mesh.RecalculateBounds();
         n_mesh.RecalculateNormals();
-    */    
+        */
     }
 
     public static void AutoWeld(Mesh mesh, float threshold, float bucketStep)
