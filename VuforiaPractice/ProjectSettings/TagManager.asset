@@ -3,7 +3,12 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 2
-  tags: []
+  tags:
+  - split_btn
+  - physics_btn
+  - material_btn
+  - confirm
+  - cancel
   layers:
   - Default
   - TransparentFX

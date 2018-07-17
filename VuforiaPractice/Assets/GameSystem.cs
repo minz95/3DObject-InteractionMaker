@@ -9,10 +9,13 @@ public class GameSystem : MonoBehaviour {
     private List<Vector3> m_vertices;   // initial vertices of the object (before selected),
                                         // redundant values removed
     private List<Vector3> s_vertices;   // vertices that are selected by the user
-    private int m_mode; // 0: divide meshes, 1: select physics, 2: select material
+    private int m_mode; // 0: default window, 1: select object, 2: select vertices to split, 
+                        // 3: physics drop down, 4: select vertices for physics 5: material drop down
     private List<GameObject> objects;
     public ObjectBehavior m_script;
 
+    bool repeatButtonDown = false;
+    
     void SetVertices(Vector3[] v)
     {
         for (int i = 0; i < v.Length; i++)
@@ -31,6 +34,28 @@ public class GameSystem : MonoBehaviour {
 
     }
 
+    /*
+     * ClickSplit
+     * deactivate main buttons, and show a message to select the object
+     * give the hover effect to all the objects in the scene
+     */
+    void ClickSplit()
+    {
+        m_mode = 1;
+
+        // deactivate the main buttons
+        GameObject.FindGameObjectWithTag("split_btn").SetActive(false);
+        GameObject.FindGameObjectWithTag("physics_btn").SetActive(false);
+        GameObject.FindGameObjectWithTag("material_btn").SetActive(false);
+
+        // activate the confirm and cancel buttons
+        GameObject.FindGameObjectWithTag("confirm").SetActive(true);
+        GameObject.FindGameObjectWithTag("cancel").SetActive(true);
+
+        // show the message to select the object
+        // TODO: enable objects' onclick event only here
+    }
+
     void Awake()
     {
         m_Instance = this;
@@ -47,6 +72,9 @@ public class GameSystem : MonoBehaviour {
         m_Instance = this;
         m_vertices = new List<Vector3>();
         m_mode = 0;
+
+        GameObject.FindGameObjectWithTag("confirm").SetActive(false);
+        GameObject.FindGameObjectWithTag("cancel").SetActive(false);
     }
 
     // Update is called once per frame
