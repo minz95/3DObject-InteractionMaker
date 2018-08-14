@@ -8,12 +8,27 @@ public class chain_behavior : MonoBehaviour {
     const int sphere_num = 1000;
     int vert_length = 0;
     Transform[] Spheres = new Transform[sphere_num];
+    private Rigidbody rb;
     Vector3[] vertices;
     //int[] triangles;
     Renderer rend;
+    float thrust = (float)-30;
 
     void OnMouseDown()
     {
+        if (selected == false)
+        {
+            rb.AddRelativeForce(Vector3.up * thrust);
+            selected = true;
+        }
+        else
+        {
+            rb.AddRelativeForce(Vector3.down * thrust);
+            selected = false;
+        }
+        //rb.AddRelativeForce(Vector3.right * thrust);
+
+        /*
         if (selected == false)
         {
             //Renderer rend = GetComponent<Renderer>();
@@ -40,6 +55,7 @@ public class chain_behavior : MonoBehaviour {
             }
             selected = false;
         }
+        */
     }
 
     Vector3[] removeDuplicates(Vector3[] dupArray)
@@ -271,6 +287,7 @@ public class chain_behavior : MonoBehaviour {
     void Start () {
         vertices = GetComponent<MeshFilter>().mesh.vertices;
         rend = GetComponent<Renderer>();
+        rb = GetComponent<Rigidbody>();
         //triangles = GetComponent<MeshFilter>().mesh.triangles;
     }
 	

@@ -9,6 +9,7 @@ TagManager:
   - material_btn
   - confirm
   - cancel
+  - test_obj
   layers:
   - Default
   - TransparentFX

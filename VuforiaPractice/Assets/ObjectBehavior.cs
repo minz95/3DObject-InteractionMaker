@@ -6,6 +6,7 @@ using System;
 
 public class ObjectBehavior : MonoBehaviour {
     public bool m_selected = false;
+    GameSystem m_system;
     const int sphere_num = 1000;
     int vert_length = 0;
     Transform[] Spheres = new Transform[sphere_num];
@@ -15,35 +16,46 @@ public class ObjectBehavior : MonoBehaviour {
     Renderer m_rend;
     Mesh m_mesh;
 
+    LayerMask layer_mask;
+
     void OnMouseDown()
     {
-        if (m_selected == false)
+        switch(m_system.GetMode())
         {
-            //Renderer rend = GetComponent<Renderer>();
-            m_rend.material.color = Color.blue;
+            case 0:
+                break;
+            case 1: // select object
+                if (m_selected == false)
+                {
+                    //m_rend.material.color = Color.blue;
 
-            //Vector3[] vertices = GetComponent<MeshFilter>().mesh.vertices;
-            Transform tr = gameObject.transform;
-            for (int i = 0; i < m_vertices.Count; ++i)
-            {
-                m_vertices[i] = tr.TransformPoint(m_vertices[i]);
-            }
-            List<Vector3> r_verts = new List<Vector3>(m_vertices);
+                    Transform tr = gameObject.transform;
+                    for (int i = 0; i < m_vertices.Count; ++i)
+                    {
+                        m_vertices[i] = tr.TransformPoint(m_vertices[i]);
+                    }
+                    List<Vector3> r_verts = new List<Vector3>(m_vertices);
 
-            Vector3[] verts = r_verts.Distinct().ToList().ToArray();
-            //removeDuplicates(vertices);
-            drawSpheres(verts);
-            m_selected = true;
-        }
-        // instead of destroying mode, will make a button for selection mode
-        else
-        {
-            for (int i = 0; i < vert_length; i++)
-            {
-                Destroy(Spheres[i].gameObject);
-            }
+                    Vector3[] verts = r_verts.Distinct().ToList().ToArray();
+                    //removeDuplicates(vertices);
+                    drawSpheres(verts);
+                    m_system.SetCurrentObject(gameObject);
+                    m_selected = true;
+                }
 
-            m_selected = false;
+                // change the layer of the object
+                gameObject.layer = 2;
+
+                break;
+            case 2: // select vertices to split
+
+                break;
+            case 3: // physics dropdown
+                break;
+            case 4: // select vertices for physics
+                break;
+            case 5: // material dropdown
+                break;
         }
     }
 
@@ -58,10 +70,23 @@ public class ObjectBehavior : MonoBehaviour {
             Spheres[i] = Instantiate(vertex_sphere, verts[i], Quaternion.identity);
             // how can we solve the occlusion problem here?
             Spheres[i].GetComponent<Renderer>().sortingOrder = 0;
+            Spheres[i].GetComponent<Renderer>().material.renderQueue = 2001;
             //Spheres[i] = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             //Spheres[i].transform.position = verts[i];
             //Spheres[i].transform.localScale -= new Vector3(0.9F, 0.9F, 0.9F);
         }
+    }
+
+    public void ClearSpheres()
+    {
+        for (int i = 0; i < vert_length; i++)
+        {
+            Destroy(Spheres[i].gameObject);
+        }
+
+        m_selected = false;
+        gameObject.layer = 0;
+        
     }
 
     /*
@@ -84,7 +109,7 @@ public class ObjectBehavior : MonoBehaviour {
      * in: s_vertices (selected vertices by the user)
      * divide meshes (correcting uvs, vertices, triangles)
      */
-    GameObject DivideMeshes(List<Vector3> s_vertices)
+    public GameObject DivideMeshes(List<Vector3> s_vertices)
     {
         // data for making a new object
         List<int> n_idx = new List<int>();
@@ -196,12 +221,18 @@ public class ObjectBehavior : MonoBehaviour {
 
     // Use this for initialization
     void Start () {
+        m_vertices = new List<Vector3>();
+        m_uvs = new List<Vector2>();
         m_mesh = GetComponent<MeshFilter>().mesh;
         m_rend = GetComponent<Renderer>();
         m_mesh.GetVertices(m_vertices);
         m_mesh.GetUVs(0, m_uvs);
         m_triangles = m_mesh.GetTriangles(0);
-	}
+        m_system = FindObjectOfType<GameSystem>().Instance;
+
+        m_rend.material.renderQueue = 2002;
+        layer_mask = ~1 << 2;
+    }
 	
 	// Update is called once per frame
 	void Update () {
