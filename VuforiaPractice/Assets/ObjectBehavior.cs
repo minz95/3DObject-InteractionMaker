@@ -40,6 +40,7 @@ public class ObjectBehavior : MonoBehaviour {
                     //removeDuplicates(vertices);
                     drawSpheres(verts);
                     m_system.SetCurrentObject(gameObject);
+                    m_system.SetMode(2);
                     m_selected = true;
                 }
 
@@ -133,7 +134,7 @@ public class ObjectBehavior : MonoBehaviour {
         // count the delete number of each index
         for (int i = 0; i < m_vertices.Count; i++)
         {
-            delete_num[i] = 0;
+            delete_num.Add(0);
         }
         for (int i = 0; i < m_vertices.Count; i++)
         {
@@ -206,6 +207,8 @@ public class ObjectBehavior : MonoBehaviour {
         temp.RecalculateBounds();
         temp.RecalculateNormals();
         temp.RecalculateTangents();
+
+        // keep the same physical properties as the original object
         return instance;
     }
 
@@ -215,6 +218,15 @@ public class ObjectBehavior : MonoBehaviour {
      * also change the physical property accordingly
      */
     void ChangeMaterial(Material s_material)
+    {
+
+    }
+
+    /*
+     * ChangeMaterial
+     * change the physical property of this object into the given type
+     */
+    void ChangePhysics(int type)
     {
 
     }

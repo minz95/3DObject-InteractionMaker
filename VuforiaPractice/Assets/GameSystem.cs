@@ -99,6 +99,11 @@ public class GameSystem : MonoBehaviour {
         return m_mode;
     }
 
+    public void SetMode(int m)
+    {
+        m_mode = m;
+    }
+
     public void SetCurrentObject(GameObject gameObject)
     {
         if(m_currobj != gameObject && m_currobj != null)
