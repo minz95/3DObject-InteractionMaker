@@ -16,7 +16,7 @@ public class vertex_sphere : MonoBehaviour {
         {
             // send to the game system
             m_system.AddSelectedVertex(gameObject.transform.position);
-            Debug.Log(gameObject.transform.position);
+            //Debug.Log(gameObject.transform.position);
             selected = true;
         }
         else

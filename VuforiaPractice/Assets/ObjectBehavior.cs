@@ -223,31 +223,51 @@ public class ObjectBehavior : MonoBehaviour {
         m_mesh.SetVertices(r_vertices);
         m_mesh.SetNormals(r_normals);
         m_mesh.SetUVs(0, r_uvs);
-        
-        
+
+
         //m_mesh.RecalculateNormals();
         //m_mesh.RecalculateTangents();
         //m_mesh.RecalculateBounds();
 
+        var mesh = new Mesh
+        {
+            vertices = s_vertices.ToArray(),
+            triangles = n_triangles.ToArray(),
+            //colors = colors
+        };
+
+        mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
+        GameObject temp_obj = new GameObject();
+
+        // Set up game object with mesh;
+        var meshRenderer = temp_obj.AddComponent<MeshRenderer>();
+        //meshRenderer.material = new Material(Shader.Find("Sprites/Default"));
+        meshRenderer.material = new Material(m_rend.material);
+
+        var filter = temp_obj.AddComponent<MeshFilter>();
+        filter.mesh = mesh;
+
         // return the game object in order to store in the game system
+        /*
         GameObject instance = new GameObject();
         MeshFilter meshfilter = instance.AddComponent<MeshFilter>();
         instance.AddComponent<MeshCollider>();
-        instance.AddComponent<MeshRenderer>();
         MeshRenderer n_meshrend = instance.AddComponent<MeshRenderer>();
         if(m_rend.material != null)
             n_meshrend.material = m_rend.material;
-        Mesh temp = instance.GetComponent<MeshFilter>().mesh;
+        Mesh temp = meshfilter.mesh;
         temp.SetVertices(s_vertices);
         temp.SetUVs(0, n_uvs);
         temp.SetTriangles(n_triangles.ToArray(), 0);
         temp.SetNormals(n_normals);
+        */
         //temp.RecalculateBounds();
         //temp.RecalculateNormals();
         //temp.RecalculateTangents();
 
         // keep the same physical properties as the original object
-        return instance;
+        return temp_obj;
     }
 
     
@@ -385,11 +405,55 @@ public class ObjectBehavior : MonoBehaviour {
         m_rend.material.renderQueue = 2002;
         layer_mask = ~1 << 2;
 
-        Debug.Log(m_vertices.Count);
-        Debug.Log(m_uvs.Count);
-        Debug.Log(m_normals.Count);
-        Debug.Log(m_triangles.Length);
+        /*
+        // Create Vector2 vertices
+        var vertices2D = new Vector2[] {
+            new Vector2(0,0),
+            new Vector2(0,1),
+            new Vector2(1,1),
+            new Vector2(1,2),
+            new Vector2(0,2),
+            new Vector2(0,3),
+            new Vector2(3,3),
+            new Vector2(3,2),
+            new Vector2(2,2),
+            new Vector2(2,1),
+            new Vector2(3,1),
+            new Vector2(3,0),
+        };
+
+        var vertices3D = System.Array.ConvertAll<Vector2, Vector3>(vertices2D, v => v);
+
+        // Use the triangulator to get indices for creating triangles
+        var triangulator = new Triangulator(vertices2D);
+        var indices = triangulator.Triangulate();
+
+        // Generate a color for each vertex
+        var colors = Enumerable.Range(0, vertices3D.Length)
+            .Select(i => UnityEngine.Random.ColorHSV())
+            .ToArray();
+
+        // Create the mesh
+        var mesh = new Mesh
+        {
+            vertices = vertices3D,
+            triangles = indices,
+            colors = colors
+        };
+        
+        mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
+        GameObject temp_obj = new GameObject();
+       
+        // Set up game object with mesh;
+        var meshRenderer = temp_obj.AddComponent<MeshRenderer>();
+        meshRenderer.material = new Material(Shader.Find("Sprites/Default"));
+
+        var filter = temp_obj.AddComponent<MeshFilter>();
+        filter.mesh = mesh;
+        */
     }
+
 	
 	// Update is called once per frame
 	void Update () {
