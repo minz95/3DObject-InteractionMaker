@@ -205,6 +205,7 @@ public class GameSystem : MonoBehaviour {
                 break;
             case 2: // select vertices to split
                 m_currobj.GetComponent<ObjectBehavior>().DivideMeshes(s_vertices);
+                //m_currobj.GetComponent<ObjectBehavior>().DeleteTriangle();
                 break;
             case 3: // physics dropdown
                 break;
