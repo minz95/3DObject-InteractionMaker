@@ -23,7 +23,7 @@ GameObject:
   - component: {fileID: 23448466855315440}
   - component: {fileID: 135010382526610420}
   - component: {fileID: 114165668208974166}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: vertex_sphere
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -96,6 +96,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 72247d81992b148449fe70fb347d4b78, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  selected: 0
 --- !u!135 &135010382526610420
 SphereCollider:
   m_ObjectHideFlags: 1

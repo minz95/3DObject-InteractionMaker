@@ -1,5 +1,5 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -87,6 +87,7 @@ public class GameSystem : MonoBehaviour {
         // if button clicked, make the user select the part
         // then gives the physics to that specific part
 
+
     }
 
     void OnGui()
@@ -112,16 +113,35 @@ public class GameSystem : MonoBehaviour {
             objectBehavior.ClearSpheres();
         }
         m_currobj = gameObject;
+        m_currobj.GetComponent<MeshFilter>().mesh.GetVertices(m_vertices);
+
+        Transform tr = m_currobj.transform;
+        for (int i = 0; i < m_vertices.Count; ++i)
+        {
+            m_vertices[i] = tr.TransformPoint(m_vertices[i]);
+        }
     }
 
     public void AddSelectedVertex(Vector3 v)
     {
+        if (m_mode != 2)
+        {
+            return;
+        }
         s_vertices.Add(v);
+
+        CheckTriangle();
     }
 
     public void RemoveSelectedVertex(Vector3 v)
     {
+        if (m_mode != 2)
+        {
+            return;
+        }
         s_vertices.Remove(v);
+
+        CheckTriangle();
     }
 
     void ActivateMenu()
@@ -205,7 +225,6 @@ public class GameSystem : MonoBehaviour {
                 break;
             case 2: // select vertices to split
                 m_currobj.GetComponent<ObjectBehavior>().DivideMeshes(s_vertices);
-                //m_currobj.GetComponent<ObjectBehavior>().DeleteTriangle();
                 break;
             case 3: // physics dropdown
                 break;
@@ -247,5 +266,55 @@ public class GameSystem : MonoBehaviour {
 
         m_mode = 0;
         ActivateMenu();
+    }
+
+    /// <summary>
+    /// EXPENSIVE OPERATION
+    /// check rather existing s_vertices make triangle faces
+    /// if exists, hightlight the triangles to show users the faces selected
+    /// </summary>
+    void CheckTriangle()
+    {
+        if (m_currobj == null) return;
+
+        var color = m_currobj.GetComponent<MeshRenderer>().material.color;
+        var colors = new Color[m_vertices.Count];
+        for(int i = 0; i < colors.Length; i++)
+        {
+            colors[i] = color;
+        }
+
+        // iterate the triangles of the object,
+        // and check whether the three vertices are contained in the simultaneously
+        int[] triangles = m_currobj.GetComponent<MeshFilter>().mesh.triangles;
+        Debug.Log(m_currobj);
+        for(int i = 0; i < triangles.Length; i += 3)
+        {
+            if(s_vertices.Contains(m_vertices[triangles[i]]) &&
+                s_vertices.Contains(m_vertices[triangles[i+1]]) &&
+                s_vertices.Contains(m_vertices[triangles[i+2]]))
+            {
+                // this triangle is contained in the selected faces
+                // highlight it!
+                Debug.Log("have a triangle: " + i);
+                
+                colors[triangles[i]] = Color.Lerp(Color.red, Color.green, m_vertices[triangles[i]].y);
+                colors[triangles[i + 1]] = Color.Lerp(Color.red, Color.green, m_vertices[triangles[i+1]].y); ;
+                colors[triangles[i + 2]] = Color.Lerp(Color.red, Color.green, m_vertices[triangles[i+2]].y); ;
+            }
+        }
+        m_currobj.GetComponent<MeshFilter>().mesh.colors = colors;
+    }
+
+    public void AddVertex(Vector2 vertex)
+    {
+        if (m_mode != 2)
+        {
+            return;
+        }
+
+        s_vertices.Add(vertex);
+
+        CheckTriangle();
     }
 }

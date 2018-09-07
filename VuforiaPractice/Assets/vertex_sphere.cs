@@ -9,8 +9,7 @@ public class vertex_sphere : MonoBehaviour {
     GameSystem m_system;
 
     void OnMouseDown()
-    {
-        
+    {      
         m_rend.material.color = Color.red;
         if (selected == false)
         {
