@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
@@ -68,9 +69,9 @@ public class GameSystem : MonoBehaviour {
         split_btn = GameObject.FindGameObjectWithTag("split_btn");
         split_btn.GetComponent<Button>().onClick.AddListener(SplitButtonClick);
         physics_btn = GameObject.FindGameObjectWithTag("physics_btn");
-        physics_btn.GetComponent<Button>().onClick.AddListener(PhysicsButtonClick);
+        physics_btn.GetComponent<Dropdown>().onValueChanged.AddListener(PhysicsButtonClick);
         material_btn = GameObject.FindGameObjectWithTag("material_btn");
-        material_btn.GetComponent<Button>().onClick.AddListener(MaterialButtonClick);
+        material_btn.GetComponent<Dropdown>().onValueChanged.AddListener(MaterialButtonClick);
     }
 
     // Update is called once per frame
@@ -151,8 +152,8 @@ public class GameSystem : MonoBehaviour {
         physics_btn.SetActive(true);
         material_btn.SetActive(true);
         split_btn.GetComponent<Button>().onClick.AddListener(SplitButtonClick);
-        physics_btn.GetComponent<Button>().onClick.AddListener(PhysicsButtonClick);
-        material_btn.GetComponent<Button>().onClick.AddListener(MaterialButtonClick);
+        physics_btn.GetComponent<Dropdown>().onValueChanged.AddListener(PhysicsButtonClick);
+        material_btn.GetComponent<Dropdown>().onValueChanged.AddListener(MaterialButtonClick);
 
         // activate the confirm and cancel buttons
         confirm_btn.SetActive(false);
@@ -175,42 +176,102 @@ public class GameSystem : MonoBehaviour {
 
     public void SplitButtonClick()
     {
-        DeactivateMenu();
-
         // clicked when split mode: cancel the split mode
         if (m_mode == 1)
         {
             CancelButtonClick();
+            ActivateMenu();
         }
         // clicked when default mode: 
         else if (m_mode == 0)
         {
             m_mode = 1;
+            DeactivateMenu();
         }
         // clicked when other modes: cancel the modes
         else
         {
             CancelButtonClick();
-            m_mode = 1;
+            m_mode = 0;
+            ActivateMenu();
         }
 
         // TODO: give the hover effect to each object
         //       show the message to select the object
     }
 
-    public void PhysicsButtonClick()
+    private void PhysicsButtonClick(int arg0)
     {
-        if (m_mode == 2)
+        Dropdown drop_physics = physics_btn.GetComponent<Dropdown>();
+        drop_physics.options.RemoveAt(0);
+        if (m_mode == 3)
         {
+            CancelButtonClick();
+            ActivateMenu();
+            Dropdown.OptionData option_data = new Dropdown.OptionData();
+            option_data.text = "Add Physics";
+            drop_physics.options.Insert(0, option_data);
+        }
+        else if (m_mode == 0)
+        {
+            m_mode = 3;
+            DeactivateMenu();
+        }
+        else
+        {
+            CancelButtonClick();
+            m_mode = 0;
+            ActivateMenu();
+            Dropdown.OptionData option_data = new Dropdown.OptionData();
+            option_data.text = "Add Physics";
+            drop_physics.options.Insert(0, option_data);
+        }
 
+        switch (arg0)
+        {
+            case 0: // push button
+                //Debug.Log("push button selected");
+                break;
+            case 1: // dial (spin)
+                break;
+            case 2: // hinge
+                break;
+            default:
+                break;
         }
     }
 
-    public void MaterialButtonClick()
+    private void MaterialButtonClick(int arg0)
     {
-        if (m_mode == 3)
+        Dropdown drop_material = material_btn.GetComponent<Dropdown>();
+        drop_material.options.RemoveAt(0);
+        if (m_mode == 4)
         {
+            CancelButtonClick();
+            ActivateMenu();
+            Dropdown.OptionData option_data = new Dropdown.OptionData();
+            option_data.text = "Set Material";
+            drop_material.options.Insert(0, option_data);
+        }
+        else if(m_mode == 0)
+        {
+            m_mode = 4;
+            DeactivateMenu();
+        }
+        else
+        {
+            CancelButtonClick();
+            m_mode = 1;
+            ActivateMenu();
+            Dropdown.OptionData option_data = new Dropdown.OptionData();
+            option_data.text = "Set Material";
+            drop_material.options.Insert(0, option_data);
+        }
 
+        switch(arg0)
+        {
+            case 0:
+                break;
         }
     }
 
