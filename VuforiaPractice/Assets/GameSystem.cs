@@ -2,25 +2,32 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class GameSystem : MonoBehaviour {
     private GameSystem m_Instance;
     public GameSystem Instance { get { return m_Instance; } }
     private GameObject m_currobj;       // object which is currently selected by the user
+    private GameObject m_physicsobj;    // object where a physical property is attached
+    private GameObject m_anchorobj;     // object which is used as an anchor of the physics
     private List<Vector3> m_vertices;   // initial vertices of the object (before selected),
                                         // redundant values removed
     private List<Vector3> s_vertices;   // vertices that are selected by the user
     private int m_mode; // 0: default window, 1: select object, 2: select vertices to split, 
-                        // 3: physics drop down, 4: select vertices for physics 5: material drop down
+                        // 3: physics drop down, 4: select thew object for physics, 5: select the anchor object for physics
+                        // 6: point the anchor to attach two objects, 7: material drop down
     private List<GameObject> objects;
     //public ObjectBehavior m_script;
 
     GameObject split_btn;
     GameObject physics_btn;
     GameObject material_btn;
+    GameObject physics_drop;
+    GameObject material_drop;
     GameObject confirm_btn;
     GameObject cancel_btn;
+
     Text ui_text;
     bool repeatButtonDown = false;
     
@@ -60,18 +67,24 @@ public class GameSystem : MonoBehaviour {
         s_vertices = new List<Vector3>();
         m_mode = 0;
         m_currobj = null;
+        m_physicsobj = null;
+        m_anchorobj = null;
 
         confirm_btn = GameObject.FindGameObjectWithTag("confirm");
         cancel_btn = GameObject.FindGameObjectWithTag("cancel");
+        physics_drop = GameObject.FindGameObjectWithTag("physics_drop");
+        material_drop = GameObject.FindGameObjectWithTag("material_drop");
         confirm_btn.SetActive(false);
         cancel_btn.SetActive(false);
+        physics_drop.SetActive(false);
+        material_drop.SetActive(false);
 
         split_btn = GameObject.FindGameObjectWithTag("split_btn");
         split_btn.GetComponent<Button>().onClick.AddListener(SplitButtonClick);
         physics_btn = GameObject.FindGameObjectWithTag("physics_btn");
-        physics_btn.GetComponent<Dropdown>().onValueChanged.AddListener(PhysicsButtonClick);
+        physics_btn.GetComponent<Button>().onClick.AddListener(PhysicsButtonClick);
         material_btn = GameObject.FindGameObjectWithTag("material_btn");
-        material_btn.GetComponent<Dropdown>().onValueChanged.AddListener(MaterialButtonClick);
+        material_btn.GetComponent<Button>().onClick.AddListener(MaterialButtonClick);
     }
 
     // Update is called once per frame
@@ -123,6 +136,24 @@ public class GameSystem : MonoBehaviour {
         }
     }
 
+    public void SetPhysicsObject(GameObject gameObject)
+    {
+        if (m_physicsobj != gameObject && m_physicsobj != null)
+        {
+            
+        }
+        m_physicsobj = gameObject;
+    }
+
+    public void SetAnchorObject(GameObject gameObject)
+    {
+        if (m_anchorobj != gameObject && m_anchorobj != null)
+        {
+
+        }
+        m_anchorobj = gameObject;
+    }
+
     public void AddSelectedVertex(Vector3 v)
     {
         if (m_mode != 2)
@@ -152,12 +183,14 @@ public class GameSystem : MonoBehaviour {
         physics_btn.SetActive(true);
         material_btn.SetActive(true);
         split_btn.GetComponent<Button>().onClick.AddListener(SplitButtonClick);
-        physics_btn.GetComponent<Dropdown>().onValueChanged.AddListener(PhysicsButtonClick);
-        material_btn.GetComponent<Dropdown>().onValueChanged.AddListener(MaterialButtonClick);
+        physics_btn.GetComponent<Button>().onClick.AddListener(PhysicsButtonClick);
+        material_btn.GetComponent<Button>().onClick.AddListener(MaterialButtonClick);
 
         // activate the confirm and cancel buttons
         confirm_btn.SetActive(false);
         cancel_btn.SetActive(false);
+        physics_drop.SetActive(false);
+        material_drop.SetActive(false);
     }
 
     void DeactivateMenu ()
@@ -170,8 +203,12 @@ public class GameSystem : MonoBehaviour {
         // activate the confirm and cancel buttons
         confirm_btn.SetActive(true);
         cancel_btn.SetActive(true);
+        //physics_drop.SetActive(true);
+        //material_drop.SetActive(true);
         confirm_btn.GetComponent<Button>().onClick.AddListener(ConfirmButtonClick);
         cancel_btn.GetComponent<Button>().onClick.AddListener(CancelButtonClick);
+        //physics_drop.GetComponent<Dropdown>().onValueChanged.AddListener(PhysicsDropdownClick);
+        //material_drop.GetComponent<Dropdown>().onValueChanged.AddListener(MaterialDropdownClick);
     }
 
     public void SplitButtonClick()
@@ -180,7 +217,6 @@ public class GameSystem : MonoBehaviour {
         if (m_mode == 1)
         {
             CancelButtonClick();
-            ActivateMenu();
         }
         // clicked when default mode: 
         else if (m_mode == 0)
@@ -192,87 +228,86 @@ public class GameSystem : MonoBehaviour {
         else
         {
             CancelButtonClick();
-            m_mode = 0;
-            ActivateMenu();
+            m_mode = 1;
+            DeactivateMenu();
         }
 
         // TODO: give the hover effect to each object
         //       show the message to select the object
     }
 
-    private void PhysicsButtonClick(int arg0)
+    private void PhysicsDropdownClick(int arg0)
     {
-        Dropdown drop_physics = physics_btn.GetComponent<Dropdown>();
-        drop_physics.options.RemoveAt(0);
-        if (m_mode == 3)
-        {
-            CancelButtonClick();
-            ActivateMenu();
-            Dropdown.OptionData option_data = new Dropdown.OptionData();
-            option_data.text = "Add Physics";
-            drop_physics.options.Insert(0, option_data);
-        }
-        else if (m_mode == 0)
-        {
-            m_mode = 3;
-            DeactivateMenu();
-        }
-        else
-        {
-            CancelButtonClick();
-            m_mode = 0;
-            ActivateMenu();
-            Dropdown.OptionData option_data = new Dropdown.OptionData();
-            option_data.text = "Add Physics";
-            drop_physics.options.Insert(0, option_data);
-        }
-
         switch (arg0)
         {
             case 0: // push button
-                //Debug.Log("push button selected");
+                if ((m_mode == 4 || m_mode == 5) && m_physicsobj != null)
+                {
+                    m_physicsobj = null;
+                    m_anchorobj = null;
+                }
+                m_mode = 4;
+                DeactivateMenu();
                 break;
             case 1: // dial (spin)
                 break;
             case 2: // hinge
+                if ((m_mode == 4 || m_mode == 5) && m_physicsobj != null)
+                {
+                    m_physicsobj = null;
+                    m_anchorobj = null;
+                }
+                m_mode = 4;
+                DeactivateMenu();
                 break;
             default:
                 break;
         }
     }
 
-    private void MaterialButtonClick(int arg0)
+    private void MaterialDropdownClick(int arg0)
     {
-        Dropdown drop_material = material_btn.GetComponent<Dropdown>();
-        drop_material.options.RemoveAt(0);
-        if (m_mode == 4)
+        switch(arg0)
+        {
+            case 0: // wood
+                break;
+        }
+    }
+
+    private void PhysicsButtonClick()
+    {
+        if(m_mode != 0)
         {
             CancelButtonClick();
-            ActivateMenu();
-            Dropdown.OptionData option_data = new Dropdown.OptionData();
-            option_data.text = "Set Material";
-            drop_material.options.Insert(0, option_data);
-        }
-        else if(m_mode == 0)
-        {
-            m_mode = 4;
-            DeactivateMenu();
+            m_mode = 0;
         }
         else
         {
+            DeactivateMenu();
+            m_mode = 3;
+            confirm_btn.SetActive(false);
+            cancel_btn.SetActive(false);
+            physics_drop.SetActive(true);
+            physics_drop.GetComponent<Dropdown>().onValueChanged.AddListener(PhysicsDropdownClick);
+        }
+    }
+
+    private void MaterialButtonClick()
+    {
+        if (m_mode != 0)
+        {
             CancelButtonClick();
-            m_mode = 1;
-            ActivateMenu();
-            Dropdown.OptionData option_data = new Dropdown.OptionData();
-            option_data.text = "Set Material";
-            drop_material.options.Insert(0, option_data);
+            m_mode = 0;
+        }
+        else
+        {
+            m_mode = 7;
+            confirm_btn.SetActive(false);
+            cancel_btn.SetActive(false);
+            material_drop.SetActive(true);
+            material_drop.GetComponent<Dropdown>().onValueChanged.AddListener(MaterialDropdownClick);
         }
 
-        switch(arg0)
-        {
-            case 0:
-                break;
-        }
     }
 
     public void ConfirmButtonClick()
@@ -284,14 +319,26 @@ public class GameSystem : MonoBehaviour {
             case 1: // select object
                 m_mode = 2;
                 break;
-            case 2: // select vertices to split
-                m_currobj.GetComponent<ObjectBehavior>().DivideMeshes(s_vertices);
+            case 2: // select vertices to split                
+                if (m_currobj != null)
+                {
+                    m_currobj.GetComponent<ObjectBehavior>().DivideMeshes(s_vertices);
+                    // erase the vertices
+                    m_currobj.GetComponent<ObjectBehavior>().ClearSpheres();
+                }
+                m_mode = 0;
+                ActivateMenu();
                 break;
             case 3: // physics dropdown
+
                 break;
-            case 4: // select vertices for physics
+            case 4: // select the object for physics
                 break;
-            case 5: // material dropdown
+            case 5: // select the anchor object for physics
+                break;
+            case 6: // point the anchor of two objects
+                break;
+            case 7: // material dropdown
                 break;
         }
     }
@@ -318,10 +365,15 @@ public class GameSystem : MonoBehaviour {
                 m_currobj = null;
                 break;
             case 3: // physics dropdown
+
                 break;
-            case 4: // select vertices for physics
+            case 4: // select the object for physics
                 break;
-            case 5: // material dropdown
+            case 5: // select the anchor object for physics
+                break;
+            case 6: // point the anchor of two objects
+                break;
+            case 7: // material dropdown
                 break;
         }
 

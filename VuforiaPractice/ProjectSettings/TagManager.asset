@@ -11,6 +11,8 @@ TagManager:
   - cancel
   - test_obj
   - DepthOnly
+  - physics_drop
+  - material_drop
   layers:
   - Default
   - TransparentFX

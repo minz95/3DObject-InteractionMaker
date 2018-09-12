@@ -6,6 +6,8 @@ using System;
 
 public class ObjectBehavior : MonoBehaviour {
     public bool m_selected = false;
+    bool m_physics = false;
+    bool m_anchor = false;
     public Transform vertex_sphere;
     GameSystem m_system;
     const int sphere_num = 1000;
@@ -47,19 +49,37 @@ public class ObjectBehavior : MonoBehaviour {
                     m_system.SetMode(2);
                     m_selected = true;
                 }
+                /*
+                else
+                {
+                    ClearSpheres();
+                    m_system.SetCurrentObject(null);
+                    m_system.SetMode(1);
+                    m_selected = false;
+                }
+                */
 
                 // change the layer of the object
                 gameObject.layer = 2;
 
                 break;
             case 2: // select vertices to split
-
+                
                 break;
             case 3: // physics dropdown
                 break;
-            case 4: // select vertices for physics
+            case 4: // select the object for physics
+                if(!m_physics)
+                {
+                    //m_system.Set
+                    m_physics = true;
+                }
                 break;
-            case 5: // material dropdown
+            case 5: // select the anchor object for physics
+                break;
+            case 6: // point the angle to attach the two objects
+                break;
+            case 7: // material dropdown
                 break;
         }
     }
@@ -86,7 +106,10 @@ public class ObjectBehavior : MonoBehaviour {
     {
         for (int i = 0; i < vert_length; i++)
         {
-            Destroy(Spheres[i].gameObject);
+            if(Spheres[i].gameObject != null)
+            {
+                Destroy(Spheres[i].gameObject);
+            }   
         }
 
         m_selected = false;
@@ -130,37 +153,6 @@ public class ObjectBehavior : MonoBehaviour {
         List<Vector3> r_normals = new List<Vector3>();
         List<Vector2> r_uvs = new List<Vector2>();
 
-        // list for storing the info: how many vertices are deleted before the given index
-        List<int> delete_num = new List<int>(m_vertices.Count);
-
-        // find selected vertices in m_vertices & remember the indices of those vertices
-        //for (int i = 0; i < s_vertices.Count; i++)
-        //{
-            //int idx = m_vertices.FindIndex(MatchVertex(s_vertices[i]));
-           // n_idx.Add(idx);
-            //n_uvs.Add(m_uvs[idx]);
-            //n_normals.Add(m_normals[idx]);
-            //Debug.Log(s_vertices[i]);
-        //}
-
-        // count the delete number of each index
-        /*
-        for (int i = 0; i < m_vertices.Count; i++)
-        {
-            delete_num.Add(0);
-        }
-        for (int i = 0; i < m_vertices.Count; i++)
-        {
-            if(n_idx.Contains(i))
-            {
-                for(int j = i; j < m_vertices.Count; j++)
-                {
-                    delete_num[j]++;
-                }
-            }
-        }
-        */
-
         // handle triangles
         for (int index = 0; index < m_triangles.Length; index += 3)
         {
@@ -203,7 +195,6 @@ public class ObjectBehavior : MonoBehaviour {
             }
             else
             {
-                //Debug.Log("How many times in here");
                 for(int i = 0; i < 3; i++)
                 {
                     if(!r_idx.Contains(m_triangles[index+i]))
@@ -220,17 +211,6 @@ public class ObjectBehavior : MonoBehaviour {
                         r_triangles.Add(Array.IndexOf(r_idx.ToArray(), m_triangles[index + i]));
                     }     
                 }
-                /*
-                r_vertices.Add(m_vertices[m_triangles[index]]);
-                r_vertices.Add(m_vertices[m_triangles[index + 1]]);
-                r_vertices.Add(m_vertices[m_triangles[index + 2]]);
-
-                // keep these triangles in the original array
-                // will change these indices later ('cause some of the vertices will be deleted)
-                r_triangles.Add(m_triangles[index]);
-                r_triangles.Add(m_triangles[index + 1]);
-                r_triangles.Add(m_triangles[index + 2]);
-                */
             }
         }
 
@@ -243,6 +223,11 @@ public class ObjectBehavior : MonoBehaviour {
             m_normals.RemoveAt(n_idx[i]);
         }
         */
+
+        // TODO: Find common vertices between n_vertices and r_vertices, 
+        //       and call the triangulate algorithm with those vertices
+        List<Vector3> common_vertices = n_vertices.Intersect(r_vertices).ToList();
+        //Triangulator triangulator = new Triangulator(common_vertices);
 
         // render the original object again
         m_mesh.SetTriangles(r_triangles.ToArray(), 0);
@@ -295,7 +280,8 @@ public class ObjectBehavior : MonoBehaviour {
     {
         switch(type)
         {
-            case 0:
+            case 0: // push button (configurable joint)
+
                 break;
         }
     }
