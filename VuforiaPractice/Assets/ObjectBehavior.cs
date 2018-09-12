@@ -71,11 +71,16 @@ public class ObjectBehavior : MonoBehaviour {
             case 4: // select the object for physics
                 if(!m_physics)
                 {
-                    //m_system.Set
+                    m_system.SetPhysicsObject(gameObject);
                     m_physics = true;
                 }
                 break;
             case 5: // select the anchor object for physics
+                if (!m_anchor)
+                {
+                    m_system.SetAnchorObject(gameObject);
+                    m_anchor = true;
+                }
                 break;
             case 6: // point the angle to attach the two objects
                 break;

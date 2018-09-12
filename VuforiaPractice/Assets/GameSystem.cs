@@ -333,8 +333,37 @@ public class GameSystem : MonoBehaviour {
 
                 break;
             case 4: // select the object for physics
+                Rigidbody p_rigidbody = m_physicsobj.GetComponent<Rigidbody>();
+                if (p_rigidbody == null)
+                {
+                    p_rigidbody = m_physicsobj.AddComponent<Rigidbody>();
+                    
+                }
+                p_rigidbody.useGravity = false;
+                p_rigidbody.freezeRotation = true;
+                p_rigidbody.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotationZ |
+                                          RigidbodyConstraints.FreezePositionX | RigidbodyConstraints.FreezeRotationX |
+                                          RigidbodyConstraints.FreezePositionY | RigidbodyConstraints.FreezeRotationY;
+                // TODO: limitedly allow movement to only one axis
+
+                m_physicsobj.AddComponent<ConfigurableJoint>();
+                
+                m_mode = 5;
                 break;
             case 5: // select the anchor object for physics
+                ConfigurableJoint c_joint = m_physicsobj.GetComponent<ConfigurableJoint>();
+                Rigidbody a_rigidbody = m_anchorobj.GetComponent<Rigidbody>();
+                if (a_rigidbody == null)
+                {
+                    a_rigidbody = m_anchorobj.AddComponent<Rigidbody>();
+                }
+                a_rigidbody.useGravity = false;
+                a_rigidbody.freezeRotation = true;
+                a_rigidbody.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotationZ |
+                                          RigidbodyConstraints.FreezePositionX | RigidbodyConstraints.FreezeRotationX |
+                                          RigidbodyConstraints.FreezePositionY | RigidbodyConstraints.FreezeRotationY;
+                c_joint.connectedBody = m_anchorobj.GetComponent<Rigidbody>();
+                m_mode = 6;
                 break;
             case 6: // point the anchor of two objects
                 break;
