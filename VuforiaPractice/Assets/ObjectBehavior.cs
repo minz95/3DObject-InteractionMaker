@@ -16,6 +16,7 @@ public class ObjectBehavior : MonoBehaviour {
     List<Vector3> m_vertices;
     List<Vector2> m_uvs;
     List<Vector3> m_normals;
+    Vector3 m_anchorpoint;
     int[] m_triangles;
 
     Renderer m_rend;
@@ -49,6 +50,7 @@ public class ObjectBehavior : MonoBehaviour {
                     m_system.SetMode(2);
                     m_selected = true;
                 }
+                // TODO: turn back m_selected to false if the operation has been finished
                 /*
                 else
                 {
@@ -71,11 +73,23 @@ public class ObjectBehavior : MonoBehaviour {
             case 4: // select the object for physics
                 if(!m_physics)
                 {
+                    Transform tr = gameObject.transform;
+                    for (int i = 0; i < m_vertices.Count; ++i)
+                    {
+                        m_vertices[i] = tr.TransformPoint(m_vertices[i]);
+                    }
+                    List<Vector3> r_verts = new List<Vector3>(m_vertices);
+
+                    Vector3[] verts = r_verts.Distinct().ToList().ToArray();
+                    // Debug.Log("m_vertices count: " + m_vertices.Count);
+                    drawSpheres(verts);
+
                     m_system.SetPhysicsObject(gameObject);
                     m_physics = true;
                 }
                 break;
             case 5: // select the anchor object for physics
+                Debug.Log("anchor object selected");
                 if (!m_anchor)
                 {
                     m_system.SetAnchorObject(gameObject);
@@ -83,6 +97,9 @@ public class ObjectBehavior : MonoBehaviour {
                 }
                 break;
             case 6: // point the angle to attach the two objects
+                Vector3 clickedPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                Debug.Log("anchor position: " + clickedPosition.x + ", " + clickedPosition.y + ", " + clickedPosition.z);
+
                 break;
             case 7: // material dropdown
                 break;
@@ -272,7 +289,7 @@ public class ObjectBehavior : MonoBehaviour {
      * change the material of this object into the given one
      * also change the physical property accordingly
      */
-    void ChangeMaterial(Material s_material)
+    public void ChangeMaterial(Material s_material)
     {
 
     }
@@ -281,7 +298,7 @@ public class ObjectBehavior : MonoBehaviour {
      * ChangeMaterial
      * change the physical property of this object into the given type
      */
-    void ChangePhysics(int type)
+    public void ChangePhysics(int type)
     {
         switch(type)
         {
@@ -297,6 +314,7 @@ public class ObjectBehavior : MonoBehaviour {
         m_vertices = new List<Vector3>();
         m_uvs = new List<Vector2>();
         m_normals = new List<Vector3>();
+        m_anchorpoint = Vector3.zero;
         m_mesh = GetComponent<MeshFilter>().mesh;
         m_rend = GetComponent<Renderer>();
         m_mesh.GetVertices(m_vertices);

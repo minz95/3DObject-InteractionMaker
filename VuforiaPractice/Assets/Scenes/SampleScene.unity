@@ -994,7 +994,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Wood
+  m_Text: None
 --- !u!222 &534864131
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1219,6 +1219,80 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 796573910}
+--- !u!1 &816286488
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 5
+  m_Component:
+  - component: {fileID: 816286489}
+  - component: {fileID: 816286491}
+  - component: {fileID: 816286490}
+  m_Layer: 5
+  m_Name: Text
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &816286489
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 816286488}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 1796632182}
+  m_RootOrder: 7
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -312, y: 236}
+  m_SizeDelta: {x: 500, y: 30}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &816286490
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 816286488}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 708705254, guid: f70555f144d8491a825f0804e09c671c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
+  m_RaycastTarget: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
+      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+  m_FontData:
+    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
+    m_FontSize: 14
+    m_FontStyle: 0
+    m_BestFit: 0
+    m_MinSize: 10
+    m_MaxSize: 40
+    m_Alignment: 0
+    m_AlignByGeometry: 0
+    m_RichText: 1
+    m_HorizontalOverflow: 0
+    m_VerticalOverflow: 0
+    m_LineSpacing: 1
+  m_Text: 
+--- !u!222 &816286491
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 816286488}
 --- !u!1 &855601622
 GameObject:
   m_ObjectHideFlags: 0
@@ -1394,7 +1468,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Button (Push)
+  m_Text: None
 --- !u!222 &896758259
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -2152,6 +2226,8 @@ MonoBehaviour:
   m_Value: 0
   m_Options:
     m_Options:
+    - m_Text: None
+      m_Image: {fileID: 0}
     - m_Text: Button (Push)
       m_Image: {fileID: 0}
     - m_Text: Dial (Spin)
@@ -2310,10 +2386,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1242589593}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b210c9975e7cdb540b2abf3b0e0dc841, type: 3}
+  m_Script: {fileID: 11500000, guid: e1c81ffb9a9c94146902867188d996b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  selected: 0
+  m_selected: 0
   vertex_sphere: {fileID: 4399936923450654, guid: fc869267657e5fc4fbcdb0234ebe3d81,
     type: 2}
 --- !u!59 &1242589595
@@ -2629,6 +2705,7 @@ GameObject:
   - component: {fileID: 1373242336}
   - component: {fileID: 1373242335}
   - component: {fileID: 1373242339}
+  - component: {fileID: 1373242340}
   m_Layer: 0
   m_Name: Cylinder
   m_TagString: Untagged
@@ -2719,6 +2796,20 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
+--- !u!114 &1373242340
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1373242334}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1c81ffb9a9c94146902867188d996b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_selected: 0
+  vertex_sphere: {fileID: 4399936923450654, guid: fc869267657e5fc4fbcdb0234ebe3d81,
+    type: 2}
 --- !u!1 &1439380353
 GameObject:
   m_ObjectHideFlags: 0
@@ -3150,6 +3241,7 @@ GameObject:
   - component: {fileID: 1649315866}
   - component: {fileID: 1649315865}
   - component: {fileID: 1649315869}
+  - component: {fileID: 1649315870}
   m_Layer: 0
   m_Name: Cylinder (1)
   m_TagString: Untagged
@@ -3240,6 +3332,20 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 14
   m_CollisionDetection: 0
+--- !u!114 &1649315870
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1649315864}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1c81ffb9a9c94146902867188d996b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_selected: 0
+  vertex_sphere: {fileID: 4399936923450654, guid: fc869267657e5fc4fbcdb0234ebe3d81,
+    type: 2}
 --- !u!1 &1703999771
 GameObject:
   m_ObjectHideFlags: 0
@@ -3616,6 +3722,7 @@ RectTransform:
   - {fileID: 490738502}
   - {fileID: 1173480799}
   - {fileID: 2071090851}
+  - {fileID: 816286489}
   m_Father: {fileID: 0}
   m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -4211,6 +4318,8 @@ MonoBehaviour:
   m_Value: 0
   m_Options:
     m_Options:
+    - m_Text: None
+      m_Image: {fileID: 0}
     - m_Text: Wood
       m_Image: {fileID: 0}
     - m_Text: Stone

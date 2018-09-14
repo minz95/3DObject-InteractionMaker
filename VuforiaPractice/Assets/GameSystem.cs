@@ -78,6 +78,7 @@ public class GameSystem : MonoBehaviour {
         cancel_btn.SetActive(false);
         physics_drop.SetActive(false);
         material_drop.SetActive(false);
+        ui_text = FindObjectOfType<Text>();
 
         split_btn = GameObject.FindGameObjectWithTag("split_btn");
         split_btn.GetComponent<Button>().onClick.AddListener(SplitButtonClick);
@@ -222,6 +223,7 @@ public class GameSystem : MonoBehaviour {
         else if (m_mode == 0)
         {
             m_mode = 1;
+            ui_text.text = "Select the object to split";
             DeactivateMenu();
         }
         // clicked when other modes: cancel the modes
@@ -229,6 +231,7 @@ public class GameSystem : MonoBehaviour {
         {
             CancelButtonClick();
             m_mode = 1;
+            ui_text.text = "Select the object to split";
             DeactivateMenu();
         }
 
@@ -240,24 +243,29 @@ public class GameSystem : MonoBehaviour {
     {
         switch (arg0)
         {
-            case 0: // push button
+            case 0:
+                break;
+            case 1: // push button
                 if ((m_mode == 4 || m_mode == 5) && m_physicsobj != null)
                 {
                     m_physicsobj = null;
                     m_anchorobj = null;
                 }
+                
                 m_mode = 4;
+                ui_text.text = "Select the object to be a button";
                 DeactivateMenu();
                 break;
-            case 1: // dial (spin)
+            case 2: // dial (spin)
                 break;
-            case 2: // hinge
+            case 3: // hinge
                 if ((m_mode == 4 || m_mode == 5) && m_physicsobj != null)
                 {
                     m_physicsobj = null;
                     m_anchorobj = null;
                 }
                 m_mode = 4;
+                ui_text.text = "Select the object to be a button";
                 DeactivateMenu();
                 break;
             default:
@@ -317,6 +325,7 @@ public class GameSystem : MonoBehaviour {
             case 0: 
                 break;
             case 1: // select object
+                ui_text.text = "Select the vertices to be separated";
                 m_mode = 2;
                 break;
             case 2: // select vertices to split                
@@ -327,18 +336,21 @@ public class GameSystem : MonoBehaviour {
                     m_currobj.GetComponent<ObjectBehavior>().ClearSpheres();
                 }
                 m_mode = 0;
+                
                 ActivateMenu();
                 break;
             case 3: // physics dropdown
 
                 break;
             case 4: // select the object for physics
+                if (m_physicsobj == null) break;
                 Rigidbody p_rigidbody = m_physicsobj.GetComponent<Rigidbody>();
                 if (p_rigidbody == null)
                 {
                     p_rigidbody = m_physicsobj.AddComponent<Rigidbody>();
                     
                 }
+                // m_currobj.GetComponent<ObjectBehavior>().ChangePhysics();
                 p_rigidbody.useGravity = false;
                 p_rigidbody.freezeRotation = true;
                 p_rigidbody.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotationZ |
@@ -347,10 +359,12 @@ public class GameSystem : MonoBehaviour {
                 // TODO: limitedly allow movement to only one axis
 
                 m_physicsobj.AddComponent<ConfigurableJoint>();
-                
+                Debug.Log("mode 4, confirm button clicked" + m_physicsobj.name);
+                ui_text.text = "Select the object to which the button will be attached";
                 m_mode = 5;
                 break;
             case 5: // select the anchor object for physics
+                if (m_anchorobj == null) break;
                 ConfigurableJoint c_joint = m_physicsobj.GetComponent<ConfigurableJoint>();
                 Rigidbody a_rigidbody = m_anchorobj.GetComponent<Rigidbody>();
                 if (a_rigidbody == null)
@@ -363,9 +377,14 @@ public class GameSystem : MonoBehaviour {
                                           RigidbodyConstraints.FreezePositionX | RigidbodyConstraints.FreezeRotationX |
                                           RigidbodyConstraints.FreezePositionY | RigidbodyConstraints.FreezeRotationY;
                 c_joint.connectedBody = m_anchorobj.GetComponent<Rigidbody>();
+                ui_text.text = "Select the anchor point of two objects";
                 m_mode = 6;
                 break;
             case 6: // point the anchor of two objects
+
+                m_physicsobj.GetComponent<ObjectBehavior>().ChangePhysics(physics_drop.GetComponent<Dropdown>().value);
+                // set the anchor point and axis here..?
+                ui_text.text = "";
                 break;
             case 7: // material dropdown
                 break;
