@@ -11,15 +11,17 @@ public class GameSystem : MonoBehaviour {
     private GameObject m_currobj;       // object which is currently selected by the user
     private GameObject m_physicsobj;    // object where a physical property is attached
     private GameObject m_anchorobj;     // object which is used as an anchor of the physics
+    private Vector3 m_anchorcoord;      // Vector3 anchor position for physics
     private List<Vector3> m_vertices;   // initial vertices of the object (before selected),
                                         // redundant values removed
     private List<Vector3> s_vertices;   // vertices that are selected by the user
     private int m_mode; // 0: default window, 1: select object, 2: select vertices to split, 
                         // 3: physics drop down, 4: select thew object for physics, 5: select the anchor object for physics
                         // 6: point the anchor to attach two objects, 7: material drop down
-    private List<GameObject> objects;
+    private List<GameObject> objects;   // a list containing newly-made separated objects
     //public ObjectBehavior m_script;
 
+    // TODO: These game objects should be changed into individual buttons and dropdowns
     GameObject split_btn;
     GameObject physics_btn;
     GameObject material_btn;
@@ -29,7 +31,6 @@ public class GameSystem : MonoBehaviour {
     GameObject cancel_btn;
 
     Text ui_text;
-    bool repeatButtonDown = false;
     
     void SetVertices(Vector3[] v)
     {
@@ -141,7 +142,7 @@ public class GameSystem : MonoBehaviour {
     {
         if (m_physicsobj != gameObject && m_physicsobj != null)
         {
-            
+            m_physicsobj.GetComponent<ObjectBehavior>().ClearOutline();
         }
         m_physicsobj = gameObject;
     }
@@ -150,9 +151,14 @@ public class GameSystem : MonoBehaviour {
     {
         if (m_anchorobj != gameObject && m_anchorobj != null)
         {
-
+            m_anchorobj.GetComponent<ObjectBehavior>().ClearOutline();
         }
         m_anchorobj = gameObject;
+    }
+
+    public void SetAnchorPosition(Vector3 position)
+    {
+        m_anchorcoord = position;
     }
 
     public void AddSelectedVertex(Vector3 v)
@@ -344,47 +350,34 @@ public class GameSystem : MonoBehaviour {
                 break;
             case 4: // select the object for physics
                 if (m_physicsobj == null) break;
-                Rigidbody p_rigidbody = m_physicsobj.GetComponent<Rigidbody>();
-                if (p_rigidbody == null)
-                {
-                    p_rigidbody = m_physicsobj.AddComponent<Rigidbody>();
-                    
-                }
-                // m_currobj.GetComponent<ObjectBehavior>().ChangePhysics();
-                p_rigidbody.useGravity = false;
-                p_rigidbody.freezeRotation = true;
-                p_rigidbody.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotationZ |
-                                          RigidbodyConstraints.FreezePositionX | RigidbodyConstraints.FreezeRotationX |
-                                          RigidbodyConstraints.FreezePositionY | RigidbodyConstraints.FreezeRotationY;
-                // TODO: limitedly allow movement to only one axis
 
-                m_physicsobj.AddComponent<ConfigurableJoint>();
                 Debug.Log("mode 4, confirm button clicked" + m_physicsobj.name);
                 ui_text.text = "Select the object to which the button will be attached";
                 m_mode = 5;
                 break;
             case 5: // select the anchor object for physics
                 if (m_anchorobj == null) break;
-                ConfigurableJoint c_joint = m_physicsobj.GetComponent<ConfigurableJoint>();
-                Rigidbody a_rigidbody = m_anchorobj.GetComponent<Rigidbody>();
-                if (a_rigidbody == null)
-                {
-                    a_rigidbody = m_anchorobj.AddComponent<Rigidbody>();
-                }
-                a_rigidbody.useGravity = false;
-                a_rigidbody.freezeRotation = true;
-                a_rigidbody.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotationZ |
-                                          RigidbodyConstraints.FreezePositionX | RigidbodyConstraints.FreezeRotationX |
-                                          RigidbodyConstraints.FreezePositionY | RigidbodyConstraints.FreezeRotationY;
-                c_joint.connectedBody = m_anchorobj.GetComponent<Rigidbody>();
+
+                Debug.Log("mode 5, confirm button clicked" + m_physicsobj.name);
                 ui_text.text = "Select the anchor point of two objects";
                 m_mode = 6;
                 break;
             case 6: // point the anchor of two objects
-
-                m_physicsobj.GetComponent<ObjectBehavior>().ChangePhysics(physics_drop.GetComponent<Dropdown>().value);
+                ChangePhysics(physics_drop.GetComponent<Dropdown>().value);
                 // set the anchor point and axis here..?
                 ui_text.text = "";
+                m_mode = 0;
+                if (m_physicsobj != null)
+                {
+                    m_physicsobj.GetComponent<ObjectBehavior>().ClearSpheres();
+                    m_physicsobj.GetComponent<ObjectBehavior>().ClearOutline();
+                }
+                if (m_anchorobj != null)
+                {
+                    m_anchorobj.GetComponent<ObjectBehavior>().ClearOutline();
+                }
+
+                ActivateMenu();
                 break;
             case 7: // material dropdown
                 break;
@@ -413,13 +406,38 @@ public class GameSystem : MonoBehaviour {
                 m_currobj = null;
                 break;
             case 3: // physics dropdown
-
+                m_physicsobj = null;
+                m_anchorcoord = Vector3.zero;
+                m_anchorobj = null;
                 break;
             case 4: // select the object for physics
+                if (m_physicsobj != null)
+                {
+                    m_physicsobj.GetComponent<ObjectBehavior>().ClearSpheres();
+                    m_physicsobj.GetComponent<ObjectBehavior>().ClearOutline();
+                }
+                m_physicsobj = null;
+                m_anchorcoord = Vector3.zero;
+                m_anchorobj = null;
                 break;
             case 5: // select the anchor object for physics
+                if (m_physicsobj != null)
+                {
+                    m_physicsobj.GetComponent<ObjectBehavior>().ClearSpheres();
+                    m_physicsobj.GetComponent<ObjectBehavior>().ClearOutline();
+                }
+                if (m_anchorobj != null)
+                {
+                    m_anchorobj.GetComponent<ObjectBehavior>().ClearOutline();
+                }
+                m_physicsobj = null;
+                m_anchorcoord = Vector3.zero;
+                m_anchorobj = null;
                 break;
             case 6: // point the anchor of two objects
+                m_physicsobj = null;
+                m_anchorcoord = Vector3.zero;
+                m_anchorobj = null;
                 break;
             case 7: // material dropdown
                 break;
@@ -477,5 +495,52 @@ public class GameSystem : MonoBehaviour {
         s_vertices.Add(vertex);
 
         CheckTriangle();
+    }
+
+    void ChangePhysics(int arg0)
+    {
+        if (m_physicsobj == null || m_anchorobj == null) return;
+        Rigidbody p_rigidbody = m_physicsobj.GetComponent<Rigidbody>();
+        Rigidbody a_rigidbody = m_anchorobj.GetComponent<Rigidbody>();
+        if (p_rigidbody == null) p_rigidbody = m_physicsobj.AddComponent<Rigidbody>();
+        if (a_rigidbody == null) a_rigidbody = m_anchorobj.AddComponent<Rigidbody>();
+        p_rigidbody.useGravity = false;
+        a_rigidbody.useGravity = false;
+
+        p_rigidbody.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotationZ |
+                                  RigidbodyConstraints.FreezePositionX | RigidbodyConstraints.FreezeRotationX |
+                                  RigidbodyConstraints.FreezePositionY | RigidbodyConstraints.FreezeRotationY;
+        a_rigidbody.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotationZ |
+                                  RigidbodyConstraints.FreezePositionX | RigidbodyConstraints.FreezeRotationX |
+                                  RigidbodyConstraints.FreezePositionY | RigidbodyConstraints.FreezeRotationY;
+
+        switch (arg0) {
+            // push button
+            case 1:
+                ConfigurableJoint c_joint = m_physicsobj.GetComponent<ConfigurableJoint>();
+                if (c_joint == null) c_joint = m_physicsobj.AddComponent<ConfigurableJoint>();
+                c_joint.connectedBody = a_rigidbody;
+
+                // CAUTION: values below are for the button on the right side of the anchor
+                // anchor value should be set through the connected anchor
+                c_joint.axis = Vector3.right;
+                //c_joint.anchor = new Vector3(0, 0.5f, 0);
+
+                c_joint.connectedAnchor = m_anchorcoord;
+                break;
+            // dial
+            case 2:
+
+                break;
+            // hinge
+            case 3:
+                HingeJoint h_joint = m_physicsobj.GetComponent<HingeJoint>();
+                if (h_joint == null) h_joint = m_physicsobj.AddComponent<HingeJoint>();
+                h_joint.connectedBody = a_rigidbody;
+
+                h_joint.connectedAnchor = m_anchorcoord;
+                h_joint.enableCollision = true;
+                break;
+        }
     }
 }

@@ -16,6 +16,7 @@ public class ObjectBehavior : MonoBehaviour {
     List<Vector3> m_vertices;
     List<Vector2> m_uvs;
     List<Vector3> m_normals;
+    Outline m_outline;
     Vector3 m_anchorpoint;
     int[] m_triangles;
 
@@ -29,6 +30,7 @@ public class ObjectBehavior : MonoBehaviour {
         switch(m_system.GetMode())
         {
             case 0:
+                GetComponent<Rigidbody>().AddRelativeForce(Vector3.forward * 30f);
                 break;
             case 1: // select object
                 if (m_selected == false)
@@ -49,6 +51,7 @@ public class ObjectBehavior : MonoBehaviour {
                     m_system.SetCurrentObject(gameObject);
                     m_system.SetMode(2);
                     m_selected = true;
+
                 }
                 // TODO: turn back m_selected to false if the operation has been finished
                 /*
@@ -83,6 +86,7 @@ public class ObjectBehavior : MonoBehaviour {
                     Vector3[] verts = r_verts.Distinct().ToList().ToArray();
                     // Debug.Log("m_vertices count: " + m_vertices.Count);
                     drawSpheres(verts);
+                    DrawOutline();
 
                     m_system.SetPhysicsObject(gameObject);
                     m_physics = true;
@@ -92,11 +96,12 @@ public class ObjectBehavior : MonoBehaviour {
                 Debug.Log("anchor object selected");
                 if (!m_anchor)
                 {
+                    DrawOutline();
                     m_system.SetAnchorObject(gameObject);
                     m_anchor = true;
                 }
                 break;
-            case 6: // point the angle to attach the two objects
+            case 6: // point the anchor to attach the two objects
                 Vector3 clickedPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
                 Debug.Log("anchor position: " + clickedPosition.x + ", " + clickedPosition.y + ", " + clickedPosition.z);
 
@@ -137,6 +142,16 @@ public class ObjectBehavior : MonoBehaviour {
         m_selected = false;
         gameObject.layer = 0;
         
+    }
+
+    public void DrawOutline()
+    {
+        m_outline.enabled = true;
+    }
+
+    public void ClearOutline()
+    {
+        m_outline.enabled = false;
     }
 
     /*
@@ -204,7 +219,8 @@ public class ObjectBehavior : MonoBehaviour {
                         n_idx.Add(m_triangles[index + i]);
                         n_vertices.Add(m_vertices[m_triangles[index + i]]);
                         n_normals.Add(m_normals[m_triangles[index + i]]);
-                        n_uvs.Add(m_uvs[m_triangles[index + i]]);
+                        if(m_uvs.Count > 0)
+                            n_uvs.Add(m_uvs[m_triangles[index + i]]);
                         n_triangles.Add(n_idx.Count - 1);
                     }
                 }
@@ -219,18 +235,22 @@ public class ObjectBehavior : MonoBehaviour {
             {
                 for(int i = 0; i < 3; i++)
                 {
+
                     if(!r_idx.Contains(m_triangles[index+i]))
                     {
                         r_idx.Add(m_triangles[index + i]);
                         r_vertices.Add(m_vertices[m_triangles[index + i]]);
                         r_normals.Add(m_normals[m_triangles[index + i]]);
-                        r_uvs.Add(m_uvs[m_triangles[index + i]]);
+                        if(m_uvs.Count > 0)
+                            r_uvs.Add(m_uvs[m_triangles[index + i]]);
                         r_triangles.Add(r_vertices.Count-1);
+                        //Debug.Log(String.Concat("new: ", r_vertices[r_vertices.Count-1]));
                     }
                     else
                     {
                         //int temp_i = r_vertices.IndexOf(m_vertices[m_triangles[index + i]]);
                         r_triangles.Add(Array.IndexOf(r_idx.ToArray(), m_triangles[index + i]));
+                        //Debug.Log(r_vertices[Array.IndexOf(r_idx.ToArray(), m_triangles[index + i])]);
                     }     
                 }
             }
@@ -249,13 +269,29 @@ public class ObjectBehavior : MonoBehaviour {
         // TODO: Find common vertices between n_vertices and r_vertices, 
         //       and call the triangulate algorithm with those vertices
         List<Vector3> common_vertices = n_vertices.Intersect(r_vertices).ToList();
+
         //Triangulator triangulator = new Triangulator(common_vertices);
 
         // render the original object again
-        m_mesh.SetTriangles(r_triangles.ToArray(), 0);
-        m_mesh.SetVertices(r_vertices);
-        m_mesh.SetNormals(r_normals);
-        m_mesh.SetUVs(0, r_uvs);
+        for(int i = 0; i < r_triangles.Count; i++)
+        {
+            if(r_triangles[i] >= r_vertices.Count)
+            {
+                Debug.Log(String.Concat("found error: ", i));
+            }
+        }
+        Debug.Log(r_triangles.Count);
+        Debug.Log(r_normals.Count);
+        Debug.Log(r_vertices.Count);
+        m_mesh.Clear();
+        m_mesh.vertices = r_vertices.ToArray();
+        m_mesh.triangles = r_triangles.ToArray();
+        //m_mesh.SetTriangles(r_triangles.ToArray(), 0);
+        //m_mesh.SetVertices(r_vertices);
+        //m_mesh.SetNormals(r_normals);
+        //m_mesh.SetUVs(0, r_uvs);
+        m_mesh.RecalculateNormals();
+        m_mesh.RecalculateBounds();
 
 
         //m_mesh.RecalculateNormals();
@@ -322,7 +358,13 @@ public class ObjectBehavior : MonoBehaviour {
         m_triangles = m_mesh.GetTriangles(0);
         m_mesh.GetNormals(m_normals);
         m_system = FindObjectOfType<GameSystem>().Instance;
-        
+        m_outline = FindObjectOfType<Outline>();
+        if (m_outline == null) m_outline = gameObject.AddComponent<Outline>();
+        m_outline.OutlineMode = Outline.Mode.OutlineAll;
+        m_outline.OutlineColor = Color.yellow;
+        m_outline.OutlineWidth = 5f;
+        m_outline.enabled = false;
+
         //m_rend.material.shader = Shader.Find("VertexColorUnlit2");
 
         //m_rend.material.renderQueue = 2002;
