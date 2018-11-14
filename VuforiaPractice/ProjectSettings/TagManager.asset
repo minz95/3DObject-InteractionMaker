@@ -13,6 +13,9 @@ TagManager:
   - DepthOnly
   - physics_drop
   - material_drop
+  - vertex_sphere
+  - Floor
+  - ui_text
   layers:
   - Default
   - TransparentFX

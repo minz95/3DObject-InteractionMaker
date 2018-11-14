@@ -1,6 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
+//using UnityEngine.AI;
 using System.Linq;
 using System;
 
@@ -51,7 +51,6 @@ public class ObjectBehavior : MonoBehaviour {
                     m_system.SetCurrentObject(gameObject);
                     m_system.SetMode(2);
                     m_selected = true;
-
                 }
                 // TODO: turn back m_selected to false if the operation has been finished
                 /*
@@ -116,7 +115,7 @@ public class ObjectBehavior : MonoBehaviour {
     {
         //Transform[] Spheres = new Transform[verts.Length];
         vert_length = verts.Length;
-        Debug.Log(vert_length);
+        //Debug.Log(vert_length);
         for (int i = 0; i < verts.Length; i++)
         {
             Spheres[i] = Instantiate(vertex_sphere, verts[i], Quaternion.identity);
@@ -373,6 +372,6 @@ public class ObjectBehavior : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		
-	}
+      
+    }
 }

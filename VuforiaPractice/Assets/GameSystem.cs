@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class GameSystem : MonoBehaviour {
@@ -20,6 +17,15 @@ public class GameSystem : MonoBehaviour {
                         // 6: point the anchor to attach two objects, 7: material drop down
     private List<GameObject> objects;   // a list containing newly-made separated objects
     //public ObjectBehavior m_script;
+    public GameObject selectedunit;
+    public List<GameObject> selectedunits = new List<GameObject>();
+    RaycastHit hit;
+    private Vector3 MouseDownPoint, CurrentDownPoint;
+    public bool IsDragging;
+    private float BoxWidth, BoxHeight, BoxLeft, BoxTop;
+    private Vector2 BoxStart, BoxFinish;
+    public List<GameObject> UnitsOnScreenSpace = new List<GameObject>();
+    public List<GameObject> UnitInDrag = new List<GameObject>();
 
     // TODO: These game objects should be changed into individual buttons and dropdowns
     GameObject split_btn;
@@ -43,11 +49,6 @@ public class GameSystem : MonoBehaviour {
     void ClearVertices()
     {
         m_vertices.Clear();
-    }
-
-    void ScriptManager()
-    {
-
     }
 
     void Awake()
@@ -79,7 +80,8 @@ public class GameSystem : MonoBehaviour {
         cancel_btn.SetActive(false);
         physics_drop.SetActive(false);
         material_drop.SetActive(false);
-        ui_text = FindObjectOfType<Text>();
+        ui_text = GameObject.Find("Text").GetComponent<Text>();
+        Debug.Log(ui_text);
 
         split_btn = GameObject.FindGameObjectWithTag("split_btn");
         split_btn.GetComponent<Button>().onClick.AddListener(SplitButtonClick);
@@ -92,23 +94,227 @@ public class GameSystem : MonoBehaviour {
     // Update is called once per frame
     void Update()
     {
-        // if button clicked
-        // select vertices (how do we know that vertices have chosen?)
-        // if the object is selected, then the object script set the vertices of the game system instance
-        // and also show the vertices on the screen
-        // when clicked and dragged, vertices are selected if close enough
+        if (Input.GetMouseButton(0))
+        {
+            if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, 100))
+            {
+                if (hit.transform.tag != "vertex_sphere")
+                {
+                    if (CheckIfMouseIsDragging())
+                    {
+                        IsDragging = true;
+                    }
+                }
+            }
+        }
 
-        // call the object's divide mesh function in here
+        if (Input.GetMouseButtonUp(0))
+        {
+            PutUnitsFromDragIntoSelectedUnits();
+            IsDragging = false;
+        }
 
-        // if button clicked, make the user select the part
-        // then gives the physics to that specific part
+        if (selectedunit == null)
+        {
+            if (Input.GetMouseButtonDown(0))
+            {
+                if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, 100))
+                {
+                    if (hit.transform.tag == "vertex_sphere")
+                    {
+                        selectedunit = hit.transform.gameObject;
+                        selectedunit.GetComponent<vertex_sphere>().ChangeColorRed();
+                        for (int i = 0; i < selectedunits.Count; i++)
+                        {
+                            selectedunits[i].transform.gameObject.GetComponent<vertex_sphere>().ChangeColorRed();
+                        }
+                        selectedunits.Clear();
+                    }
+                    
+                    if (hit.transform.tag == "Floor")
+                    {
+                        for (int i = 0; i < selectedunits.Count; i++)
+                        {
+                            selectedunits[i].transform.gameObject.GetComponent<vertex_sphere>().ChangeColorDefault();
+                        }
+                        selectedunits.Clear();
+                    }
+                    
+                }
+            }
+        }
+        else
+        {
+            if (Input.GetMouseButtonDown(0) && !Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.RightShift))
+            {
+                if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, 100))
+                {
+                    if (hit.transform.tag == "vertex_sphere")
+                    {
+                        selectedunit.transform.gameObject.GetComponent<vertex_sphere>().ChangeColorDefault();
+                        selectedunit = null;
+                        selectedunit = hit.transform.gameObject;
+                        selectedunit.transform.gameObject.GetComponent<vertex_sphere>().ChangeColorRed();
 
+                    }
+                    
+                    if (hit.transform.tag == "Floor")
+                    {
+                        selectedunit.transform.gameObject.GetComponent<vertex_sphere>().ChangeColorDefault();
+                        selectedunit = null;
+                    }
+                    
+                }
+            }
+        }
+        if (Input.GetMouseButtonDown(0) && Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
+        {
+            if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, 100))
+            {
+                if (hit.transform.tag == "vertex_sphere")
+                {
+                    if (selectedunit != null)
+                    {
+                        selectedunits.Add(selectedunit);
+                        AddSelectedVertex(selectedunit.transform.position);
+                        selectedunit = null;
+                    }
+                    selectedunits.Add(hit.transform.gameObject);
+                    AddSelectedVertex(hit.transform.position);
+                    for (int i = 0; i < selectedunits.Count; i++)
+                    {
+                        selectedunits[i].transform.gameObject.GetComponent<vertex_sphere>().ChangeColorRed();
+                    }
+
+                }
+            }
+        }
+
+        if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, 100))
+        {
+            CurrentDownPoint = hit.point;
+        }
+
+        if (Input.GetMouseButtonDown(0))
+        {
+            if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, 100))
+                MouseDownPoint = hit.point;
+        }
+
+        if (IsDragging)
+        {
+            BoxWidth = Camera.main.WorldToScreenPoint(MouseDownPoint).x - Camera.main.WorldToScreenPoint(CurrentDownPoint).x;
+            BoxHeight = Camera.main.WorldToScreenPoint(MouseDownPoint).y - Camera.main.WorldToScreenPoint(CurrentDownPoint).y;
+            BoxLeft = Input.mousePosition.x;
+            BoxTop = (Screen.height - Input.mousePosition.y) - BoxHeight;
+
+            if (BoxWidth > 0f && BoxHeight < 0f)
+            {
+                BoxStart = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
+            }
+            else if (BoxWidth > 0f && BoxHeight > 0f)
+            {
+                BoxStart = new Vector2(Input.mousePosition.x, Input.mousePosition.y + BoxHeight);
+            }
+            else if (BoxWidth < 0f && BoxHeight < 0f)
+            {
+                BoxStart = new Vector2(Input.mousePosition.x + BoxWidth, Input.mousePosition.y);
+            }
+            else if (BoxWidth < 0f && BoxHeight > 0f)
+            {
+                BoxStart = new Vector2(Input.mousePosition.x + BoxWidth, Input.mousePosition.y + BoxHeight);
+            }
+            BoxFinish = new Vector2(BoxStart.x + Unsigned(BoxWidth), BoxStart.y - Unsigned(BoxHeight));
+        }
 
     }
 
-    void OnGui()
+    void LateUpdate()
     {
-        // common GUI code goes here
+        UnitInDrag.Clear();
+        if (IsDragging && UnitsOnScreenSpace.Count > 0)
+        {
+            selectedunit = null;
+            for (int i = 0; i < UnitsOnScreenSpace.Count; i++)
+            {
+                GameObject UnitObj = UnitsOnScreenSpace[i] as GameObject;
+                vertex_sphere PosScript = UnitObj.transform.GetComponent<vertex_sphere>();
+                //GameObject selectmarker = UnitObj.transform.Find("vertex_sphere").gameObject;
+                if (!UnitInDrag.Contains(UnitObj))
+                {
+                    if (UnitWithinDrag(PosScript.ScreenPos))
+                    {
+                        //selectmarker.SetActive(true);
+                        UnitObj.GetComponent<vertex_sphere>().ChangeColorRed();
+                        UnitInDrag.Add(UnitObj);
+                    }
+                    else
+                    {
+                        if (!UnitInDrag.Contains(UnitObj))
+                            UnitObj.GetComponent<vertex_sphere>().ChangeColorDefault();
+                        //selectmarker.SetActive(false);
+
+                    }
+                }
+            }
+        }
+    }
+
+    void OnGUI()
+    {
+        // draw box if dragging
+        if (IsDragging)
+        {
+            GUI.Box(new Rect(BoxLeft, BoxTop, BoxWidth, BoxHeight), "");
+        }
+    }
+
+    float Unsigned(float val)
+    {
+        if (val < 0f)
+            val *= -1;
+        return val;
+    }
+
+    private bool CheckIfMouseIsDragging()
+    {
+        if (CurrentDownPoint.x - 2 >= MouseDownPoint.x || CurrentDownPoint.y - 2 >= MouseDownPoint.y || CurrentDownPoint.z - 2 >= MouseDownPoint.z ||
+            CurrentDownPoint.x < MouseDownPoint.x - 2 || CurrentDownPoint.y < MouseDownPoint.y - 2 || CurrentDownPoint.z < MouseDownPoint.z - 2)
+            return true;
+        else
+            return false;
+    }
+
+    public bool UnitWithinScreenSpace(Vector2 UnitScreenPos)
+    {
+        if ((UnitScreenPos.x < Screen.width && UnitScreenPos.y < Screen.height) && (UnitScreenPos.x > 0f && UnitScreenPos.y > 0f))
+            return true;
+        else
+            return false;
+    }
+
+    public bool UnitWithinDrag(Vector2 UnitScreenPos)
+    {
+        if ((UnitScreenPos.x > BoxStart.x && UnitScreenPos.y < BoxStart.y) && (UnitScreenPos.x < BoxFinish.x && UnitScreenPos.y > BoxFinish.y))
+            return true;
+        else
+            return false;
+    }
+
+    public void PutUnitsFromDragIntoSelectedUnits()
+    {
+        if (UnitInDrag.Count > 0)
+        {
+            for (int i = 0; i < UnitInDrag.Count; i++)
+            {
+                if (!selectedunits.Contains(UnitInDrag[i]))
+                {
+                    selectedunits.Add(UnitInDrag[i]);
+                    AddSelectedVertex(UnitInDrag[i].transform.position);
+                }
+            }
+        }
+        UnitInDrag.Clear();
     }
 
     public int GetMode()
@@ -169,7 +375,7 @@ public class GameSystem : MonoBehaviour {
         }
         s_vertices.Add(v);
 
-        CheckTriangle();
+        // CheckTriangle();
     }
 
     public void RemoveSelectedVertex(Vector3 v)
@@ -180,7 +386,7 @@ public class GameSystem : MonoBehaviour {
         }
         s_vertices.Remove(v);
 
-        CheckTriangle();
+        // CheckTriangle();
     }
 
     void ActivateMenu()
@@ -466,7 +672,6 @@ public class GameSystem : MonoBehaviour {
         // iterate the triangles of the object,
         // and check whether the three vertices are contained in the simultaneously
         int[] triangles = m_currobj.GetComponent<MeshFilter>().mesh.triangles;
-        Debug.Log(m_currobj);
         for(int i = 0; i < triangles.Length; i += 3)
         {
             if(s_vertices.Contains(m_vertices[triangles[i]]) &&
@@ -475,7 +680,6 @@ public class GameSystem : MonoBehaviour {
             {
                 // this triangle is contained in the selected faces
                 // highlight it!
-                Debug.Log("have a triangle: " + i);
                 
                 colors[triangles[i]] = Color.Lerp(Color.red, Color.green, m_vertices[triangles[i]].y);
                 colors[triangles[i + 1]] = Color.Lerp(Color.red, Color.green, m_vertices[triangles[i+1]].y); ;
@@ -494,7 +698,7 @@ public class GameSystem : MonoBehaviour {
 
         s_vertices.Add(vertex);
 
-        CheckTriangle();
+        // CheckTriangle();
     }
 
     void ChangePhysics(int arg0)
