@@ -37,11 +37,6 @@ public class ObjectBehavior : MonoBehaviour {
                 {
                     //m_rend.material.color = Color.blue;
 
-                    Transform tr = gameObject.transform;
-                    for (int i = 0; i < m_vertices.Count; ++i)
-                    {
-                        m_vertices[i] = tr.TransformPoint(m_vertices[i]);
-                    }
                     List<Vector3> r_verts = new List<Vector3>(m_vertices);
 
                     Vector3[] verts = r_verts.Distinct().ToList().ToArray();
@@ -75,11 +70,6 @@ public class ObjectBehavior : MonoBehaviour {
             case 4: // select the object for physics
                 if(!m_physics)
                 {
-                    Transform tr = gameObject.transform;
-                    for (int i = 0; i < m_vertices.Count; ++i)
-                    {
-                        m_vertices[i] = tr.TransformPoint(m_vertices[i]);
-                    }
                     List<Vector3> r_verts = new List<Vector3>(m_vertices);
 
                     Vector3[] verts = r_verts.Distinct().ToList().ToArray();
@@ -279,9 +269,7 @@ public class ObjectBehavior : MonoBehaviour {
                 Debug.Log(String.Concat("found error: ", i));
             }
         }
-        Debug.Log(r_triangles.Count);
-        Debug.Log(r_normals.Count);
-        Debug.Log(r_vertices.Count);
+
         m_mesh.Clear();
         m_mesh.vertices = r_vertices.ToArray();
         m_mesh.triangles = r_triangles.ToArray();
@@ -291,11 +279,6 @@ public class ObjectBehavior : MonoBehaviour {
         //m_mesh.SetUVs(0, r_uvs);
         m_mesh.RecalculateNormals();
         m_mesh.RecalculateBounds();
-
-
-        //m_mesh.RecalculateNormals();
-        //m_mesh.RecalculateTangents();
-        //m_mesh.RecalculateBounds();
 
         var mesh = new Mesh
         {
@@ -312,11 +295,83 @@ public class ObjectBehavior : MonoBehaviour {
         var meshRenderer = temp_obj.AddComponent<MeshRenderer>();
         //meshRenderer.material = new Material(Shader.Find("Sprites/Default"));
         meshRenderer.material = new Material(m_rend.material);
+        // split the texture of the object
+        Texture2D origin_texture = (Texture2D)m_rend.material.mainTexture;
+        Color32[] origin_color = origin_texture.GetPixels32();
+        Debug.Log("triangle count: " + n_triangles.Count);
+        Debug.Log("uv count: " + m_mesh.uv.Length);
+        Debug.Log(m_normals.Count + "+" + mesh.normals.Length + " vs. " + origin_color.Length);
+        Color32[] n_color = ((Texture2D)meshRenderer.material.mainTexture).GetPixels32();
+        //Debug.Log(n_color.Length);
+        /*
+        for(int i = 0; i < origin_color.Length; i++)
+        {
+            n_color[i] = 
+        }
+        */
 
         var filter = temp_obj.AddComponent<MeshFilter>();
         filter.mesh = mesh;
 
+
         return temp_obj;
+    }
+
+    public Vector3 GetPixelWorldPos(Texture2D mainTex, Color32 color, int index)
+    {
+        int w = mainTex.width;
+        int h = mainTex.height;
+
+        // find color in texture
+        /*
+        Color[] colors = mainTex.GetPixels();
+        int index = -1;
+        for (int i = 0; i < colors.Length; i++)
+        {
+            if (colors[i] == color)
+            {
+                index = i;
+                break;
+            }
+        }
+        */
+        if (index == -1)
+            return Vector3.zero;
+
+        // Find triangle and get local pos
+        var point = new Vector2(index % w, index / w) - new Vector2(0.5f / w, 0.5f / h);
+        var mf = gameObject.GetComponent<MeshFilter>();
+        var mesh = m_mesh;
+        var uvs = m_uvs.ToArray();
+        var verts = mesh.vertices;
+        var tris = mesh.triangles;
+        for (int i = 0; i < m_triangles.Length; i += 3)
+        {
+            var uv0 = m_uvs[i + 0];
+            var uv1 = m_uvs[i + 1];
+            var uv2 = m_uvs[i + 2];
+            var bary = new Barycentric(uv0, uv1, uv2, point);
+            
+            if (bary.IsInside)
+            {
+                Vector3 localPos = m_vertices[i + 0] * bary.u + m_vertices[i + 1] * bary.v + m_vertices[i + 2] * bary.w;
+                // Transform to world pos and return
+                return gameObject.transform.TransformPoint(localPos);
+            }
+        }
+        return Vector3.zero;
+    }
+
+    public bool InTriangle(Vector2 A, Vector2 B, Vector2 C, Vector2 P)
+    {
+        double s1 = C.y - A.y;
+        double s2 = C.x - A.x;
+        double s3 = B.y - A.y;
+        double s4 = P.y - A.y;
+
+        double w1 = (A.x * s1 + s4 * s2 - P.x * s1) / (s3 * s2 - (B.x - A.x) * s1);
+        double w2 = (s4 - w1 * s3) / s1;
+        return w1 >= 0 && w2 >= 0 && (w1 + w2) <= 1;
     }
 
     /*
@@ -363,6 +418,12 @@ public class ObjectBehavior : MonoBehaviour {
         m_outline.OutlineColor = Color.yellow;
         m_outline.OutlineWidth = 5f;
         m_outline.enabled = false;
+
+        Transform tr = gameObject.transform;
+        for (int i = 0; i < m_vertices.Count; ++i)
+        {
+            m_vertices[i] = tr.TransformPoint(m_vertices[i]);
+        }
 
         //m_rend.material.shader = Shader.Find("VertexColorUnlit2");
 
