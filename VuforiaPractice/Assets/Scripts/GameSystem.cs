@@ -81,7 +81,6 @@ public class GameSystem : MonoBehaviour {
         physics_drop.SetActive(false);
         material_drop.SetActive(false);
         ui_text = GameObject.Find("Text").GetComponent<Text>();
-        Debug.Log(ui_text);
 
         split_btn = GameObject.FindGameObjectWithTag("split_btn");
         split_btn.GetComponent<Button>().onClick.AddListener(SplitButtonClick);

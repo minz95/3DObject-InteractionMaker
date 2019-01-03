@@ -40,7 +40,6 @@ public class ObjectBehavior : MonoBehaviour {
                     List<Vector3> r_verts = new List<Vector3>(m_vertices);
 
                     Vector3[] verts = r_verts.Distinct().ToList().ToArray();
-                    Debug.Log("m_vertices count: " + m_vertices.Count);
                     //removeDuplicates(vertices);
                     drawSpheres(verts);
                     m_system.SetCurrentObject(gameObject);
@@ -169,83 +168,103 @@ public class ObjectBehavior : MonoBehaviour {
         List<int> n_idx = new List<int>();
         List<Vector3> n_vertices = new List<Vector3>();
         List<Vector2> n_uvs = new List<Vector2>();
-        List<int> n_triangles = new List<int>();
+        List<Vector2> n_uv2 = new List<Vector2>();
+        List<Vector2> n_uv3 = new List<Vector2>();
+        List<Vector2> n_uv4 = new List<Vector2>();
+        List<List<int>> n_triangles = new List<List<int>>();
         List<Vector3> n_normals = new List<Vector3>();
         
         // remaining results (removed selected vertices from the original data)
-        List<int> r_triangles = new List<int>();
+        List<List<int>> r_triangles = new List<List<int>>();
         List<int> r_idx = new List<int>();
         List<Vector3> r_vertices = new List<Vector3>();
         List<Vector3> r_normals = new List<Vector3>();
         List<Vector2> r_uvs = new List<Vector2>();
+        List<Vector2> r_uv2 = new List<Vector2>();
+        List<Vector2> r_uv3 = new List<Vector2>();
+        List<Vector2> r_uv4 = new List<Vector2>();
 
         // handle triangles
-        for (int index = 0; index < m_triangles.Length; index += 3)
+        int cumulate_index = 0;
+        Debug.Log("submesh count: " + m_mesh.subMeshCount);
+        for (int c = 0; c < m_mesh.subMeshCount; c++)
         {
-            // triangle indices contain a vertex that should be removed.
-            /*
-            Debug.Log("-------------------------------------" + index);
-            Debug.Log(m_vertices[m_triangles[index]]);
-            Debug.Log(m_vertices[m_triangles[index + 1]]);
-            Debug.Log(m_vertices[m_triangles[index + 2]]);
-            */
-
-            // if all vertices of the triangle are contained in the selected vertices,
-            // this triangle can be contained in the new triangle list
-            if (s_vertices.Contains(m_vertices[m_triangles[index]]) &&
-                s_vertices.Contains(m_vertices[m_triangles[index + 1]]) &&
-                s_vertices.Contains(m_vertices[m_triangles[index + 2]]))
+            m_triangles = m_mesh.GetTriangles(c);
+            List<int> temp_ntriangles = new List<int>();
+            List<int> temp_rtriangles = new List<int>();
+            for (int index = 0; index < m_triangles.Length; index += 3)
             {
-                for(int i = 0; i < 3; i++)
+                // if all vertices of the triangle are contained in the selected vertices,
+                // this triangle can be contained in the new triangle list
+                if (s_vertices.Contains(m_vertices[m_triangles[index]]) &&
+                    s_vertices.Contains(m_vertices[m_triangles[index + 1]]) &&
+                    s_vertices.Contains(m_vertices[m_triangles[index + 2]]))
                 {
-                    if (n_idx.Contains(m_triangles[index + i]))
+                    for (int i = 0; i < 3; i++)
                     {
-                        n_triangles.Add(Array.IndexOf(n_idx.ToArray(), m_triangles[index + i]));
-                        
+                        if (n_idx.Contains(m_triangles[index + i]))
+                        {
+                            temp_ntriangles.Add(Array.IndexOf(n_idx.ToArray(), m_triangles[index + i]));
+
+                        }
+                        else
+                        {
+                            n_idx.Add(m_triangles[index + i]);
+                            n_vertices.Add(m_vertices[m_triangles[index + i]]);
+                            n_normals.Add(m_normals[m_triangles[index + i]]);
+                            if (m_uvs.Count > 0)
+                                n_uvs.Add(m_uvs[m_triangles[index + i]]);
+                            if (m_mesh.uv2.Length > 0)
+                                n_uv2.Add(m_mesh.uv2[m_triangles[index + i]]);
+                            if (m_mesh.uv3.Length > 0)
+                                n_uv3.Add(m_mesh.uv3[m_triangles[index + i]]);
+                            if (m_mesh.uv4.Length > 0)
+                                n_uv4.Add(m_mesh.uv4[m_triangles[index + i]]);
+                            temp_ntriangles.Add(n_idx.Count - 1);
+                        }
                     }
-                    else
+
+                    /*
+                    n_triangles.Add(Array.IndexOf(n_idx.ToArray(), m_triangles[index]));
+                    n_triangles.Add(Array.IndexOf(n_idx.ToArray(), m_triangles[index + 1]));
+                    n_triangles.Add(Array.IndexOf(n_idx.ToArray(), m_triangles[index + 2]));
+                    */
+                }
+                else
+                {
+                    for (int i = 0; i < 3; i++)
                     {
-                        n_idx.Add(m_triangles[index + i]);
-                        n_vertices.Add(m_vertices[m_triangles[index + i]]);
-                        n_normals.Add(m_normals[m_triangles[index + i]]);
-                        if(m_uvs.Count > 0)
-                            n_uvs.Add(m_uvs[m_triangles[index + i]]);
-                        n_triangles.Add(n_idx.Count - 1);
+
+                        if (!r_idx.Contains(m_triangles[index + i]))
+                        {
+                            r_idx.Add(m_triangles[index + i]);
+                            r_vertices.Add(m_vertices[m_triangles[index + i]]);
+                            r_normals.Add(m_normals[m_triangles[index + i]]);
+                            if (m_uvs.Count > 0)
+                                r_uvs.Add(m_uvs[m_triangles[index + i]]);
+                            if (m_mesh.uv2.Length > 0)
+                                r_uv2.Add(m_mesh.uv2[m_triangles[index + i]]);
+                            if (m_mesh.uv3.Length > 0)
+                                r_uv3.Add(m_mesh.uv3[m_triangles[index + i]]);
+                            if (m_mesh.uv4.Length > 0)
+                                r_uv4.Add(m_mesh.uv4[m_triangles[index + i]]);
+                            temp_rtriangles.Add(r_vertices.Count - 1);
+                            //Debug.Log(String.Concat("new: ", r_vertices[r_vertices.Count-1]));
+                        }
+                        else
+                        {
+                            //int temp_i = r_vertices.IndexOf(m_vertices[m_triangles[index + i]]);
+                            temp_rtriangles.Add(Array.IndexOf(r_idx.ToArray(), m_triangles[index + i]));
+                            //Debug.Log(r_vertices[Array.IndexOf(r_idx.ToArray(), m_triangles[index + i])]);
+                        }
                     }
                 }
-               
-                /*
-                n_triangles.Add(Array.IndexOf(n_idx.ToArray(), m_triangles[index]));
-                n_triangles.Add(Array.IndexOf(n_idx.ToArray(), m_triangles[index + 1]));
-                n_triangles.Add(Array.IndexOf(n_idx.ToArray(), m_triangles[index + 2]));
-                */
             }
-            else
-            {
-                for(int i = 0; i < 3; i++)
-                {
-
-                    if(!r_idx.Contains(m_triangles[index+i]))
-                    {
-                        r_idx.Add(m_triangles[index + i]);
-                        r_vertices.Add(m_vertices[m_triangles[index + i]]);
-                        r_normals.Add(m_normals[m_triangles[index + i]]);
-                        if(m_uvs.Count > 0)
-                            r_uvs.Add(m_uvs[m_triangles[index + i]]);
-                        r_triangles.Add(r_vertices.Count-1);
-                        //Debug.Log(String.Concat("new: ", r_vertices[r_vertices.Count-1]));
-                    }
-                    else
-                    {
-                        //int temp_i = r_vertices.IndexOf(m_vertices[m_triangles[index + i]]);
-                        r_triangles.Add(Array.IndexOf(r_idx.ToArray(), m_triangles[index + i]));
-                        //Debug.Log(r_vertices[Array.IndexOf(r_idx.ToArray(), m_triangles[index + i])]);
-                    }     
-                }
-            }
+            cumulate_index += m_triangles.Length;
+            n_triangles.Add(temp_ntriangles);
+            r_triangles.Add(temp_rtriangles);
         }
 
-        // remove the selected vertices & uvs from the original lists
         /*
         for (int i = 0; i < n_idx.Count; i++)
         {
@@ -261,31 +280,51 @@ public class ObjectBehavior : MonoBehaviour {
 
         //Triangulator triangulator = new Triangulator(common_vertices);
 
-        // render the original object again
+        var _mesh = new Mesh
+        {
+            vertices = r_vertices.ToArray(),
+            //triangles = r_triangles.ToArray(),
+            uv = r_uvs.ToArray(),
+            uv2 = r_uv2.ToArray(),
+            uv3 = r_uv3.ToArray(),
+            uv4 = r_uv4.ToArray()
+        };
+
         for(int i = 0; i < r_triangles.Count; i++)
         {
-            if(r_triangles[i] >= r_vertices.Count)
-            {
-                Debug.Log(String.Concat("found error: ", i));
-            }
+            _mesh.SetTriangles(r_triangles[i], i);
+            _mesh.subMeshCount++;
         }
 
-        m_mesh.Clear();
-        m_mesh.vertices = r_vertices.ToArray();
-        m_mesh.triangles = r_triangles.ToArray();
-        //m_mesh.SetTriangles(r_triangles.ToArray(), 0);
-        //m_mesh.SetVertices(r_vertices);
-        //m_mesh.SetNormals(r_normals);
-        //m_mesh.SetUVs(0, r_uvs);
-        m_mesh.RecalculateNormals();
-        m_mesh.RecalculateBounds();
+        _mesh.RecalculateNormals();
+        _mesh.RecalculateBounds();
 
+        GameObject _obj = new GameObject();
+        var _meshRenderer = _obj.AddComponent<MeshRenderer>();
+        _meshRenderer.material = new Material(m_rend.material);
+        _meshRenderer.materials = m_rend.materials;
+        var _filter = _obj.AddComponent<MeshFilter>();
+        _filter.mesh = _mesh;
+        _obj.AddComponent<ObjectBehavior>();
+        _obj.AddComponent<MeshCollider>();
+        _obj.name = "part_obj";
+        gameObject.SetActive(false);
+        
         var mesh = new Mesh
         {
             vertices = n_vertices.ToArray(),
-            triangles = n_triangles.ToArray(),
-            //colors = colors
+            //triangles = n_triangles.ToArray(),
+            uv = n_uvs.ToArray(),
+            uv2 = n_uv2.ToArray(),
+            uv3 = n_uv3.ToArray(),
+            uv4 = n_uv4.ToArray()
         };
+
+        for (int i = 0; i < n_triangles.Count; i++)
+        {
+            mesh.SetTriangles(n_triangles[i], i);
+            mesh.subMeshCount++;
+        }
 
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
@@ -295,13 +334,18 @@ public class ObjectBehavior : MonoBehaviour {
         var meshRenderer = temp_obj.AddComponent<MeshRenderer>();
         //meshRenderer.material = new Material(Shader.Find("Sprites/Default"));
         meshRenderer.material = new Material(m_rend.material);
+        meshRenderer.materials = m_rend.materials;
+        //Debug.Log("material length: " + meshRenderer.materials.Length);
+
         // split the texture of the object
+        /*
         Texture2D origin_texture = (Texture2D)m_rend.material.mainTexture;
         Color32[] origin_color = origin_texture.GetPixels32();
         Debug.Log("triangle count: " + n_triangles.Count);
         Debug.Log("uv count: " + m_mesh.uv.Length);
         Debug.Log(m_normals.Count + "+" + mesh.normals.Length + " vs. " + origin_color.Length);
         Color32[] n_color = ((Texture2D)meshRenderer.material.mainTexture).GetPixels32();
+        */
         //Debug.Log(n_color.Length);
         /*
         for(int i = 0; i < origin_color.Length; i++)
@@ -312,7 +356,13 @@ public class ObjectBehavior : MonoBehaviour {
 
         var filter = temp_obj.AddComponent<MeshFilter>();
         filter.mesh = mesh;
+        temp_obj.AddComponent<ObjectBehavior>();
+        temp_obj.AddComponent<MeshCollider>();
+        temp_obj.name = "part_obj";
 
+        GameObject p_obj = new GameObject();
+        _obj.transform.SetParent(p_obj.transform);
+        temp_obj.transform.SetParent(p_obj.transform);
 
         return temp_obj;
     }
@@ -409,7 +459,7 @@ public class ObjectBehavior : MonoBehaviour {
         m_rend = GetComponent<Renderer>();
         m_mesh.GetVertices(m_vertices);
         m_mesh.GetUVs(0, m_uvs);
-        m_triangles = m_mesh.GetTriangles(0);
+        m_triangles = m_mesh.triangles;
         m_mesh.GetNormals(m_normals);
         m_system = FindObjectOfType<GameSystem>().Instance;
         m_outline = FindObjectOfType<Outline>();
