@@ -24,13 +24,33 @@ public class ObjectBehavior : MonoBehaviour {
     Mesh m_mesh;
 
     LayerMask layer_mask;
+    Animator m_anim;
+    int pressHash = Animator.StringToHash("press");
+    int idleHash = Animator.StringToHash("Base Layer.Idle");
+    Vector3 m_direction = Vector3.zero;
+    float m_force = 0f;
+    float m_speed = 0.2f;
+    Vector3 currentLerp = Vector3.zero;
+    bool isPressing = false;
 
     void OnMouseDown()
     {
         switch(m_system.GetMode())
         {
             case 0:
-                GetComponent<Rigidbody>().AddRelativeForce(Vector3.forward * 30f);
+                //GetComponent<Rigidbody>().AddRelativeForce(Vector3.forward * 30f);
+                if (m_direction != Vector3.zero)
+                {
+                    transform.Translate(m_direction * 1.5f);
+                    isPressing = true;
+                    /*
+                    AnimatorStateInfo stateInfo = m_anim.GetCurrentAnimatorStateInfo(0);
+                    if (stateInfo.fullPathHash == idleHash)
+                    {
+                        m_anim.SetTrigger(pressHash);
+                    }
+                    */
+                }
                 break;
             case 1: // select object
                 if (m_selected == false)
@@ -184,9 +204,11 @@ public class ObjectBehavior : MonoBehaviour {
         List<Vector2> r_uv3 = new List<Vector2>();
         List<Vector2> r_uv4 = new List<Vector2>();
 
+        Vector3 n_position = Vector3.zero;
+        Vector3 r_position = Vector3.zero;
+
         // handle triangles
         int cumulate_index = 0;
-        Debug.Log("submesh count: " + m_mesh.subMeshCount);
         for (int c = 0; c < m_mesh.subMeshCount; c++)
         {
             m_triangles = m_mesh.GetTriangles(c);
@@ -211,6 +233,7 @@ public class ObjectBehavior : MonoBehaviour {
                         {
                             n_idx.Add(m_triangles[index + i]);
                             n_vertices.Add(m_vertices[m_triangles[index + i]]);
+                            n_position += m_vertices[m_triangles[index + i]];
                             n_normals.Add(m_normals[m_triangles[index + i]]);
                             if (m_uvs.Count > 0)
                                 n_uvs.Add(m_uvs[m_triangles[index + i]]);
@@ -239,6 +262,7 @@ public class ObjectBehavior : MonoBehaviour {
                         {
                             r_idx.Add(m_triangles[index + i]);
                             r_vertices.Add(m_vertices[m_triangles[index + i]]);
+                            r_position += m_vertices[m_triangles[index + i]];
                             r_normals.Add(m_normals[m_triangles[index + i]]);
                             if (m_uvs.Count > 0)
                                 r_uvs.Add(m_uvs[m_triangles[index + i]]);
@@ -265,20 +289,22 @@ public class ObjectBehavior : MonoBehaviour {
             r_triangles.Add(temp_rtriangles);
         }
 
-        /*
-        for (int i = 0; i < n_idx.Count; i++)
-        {
-            m_vertices.RemoveAt(n_idx[i]);
-            m_uvs.RemoveAt(n_idx[i]);
-            m_normals.RemoveAt(n_idx[i]);
-        }
-        */
-
-        // TODO: Find common vertices between n_vertices and r_vertices, 
-        //       and call the triangulate algorithm with those vertices
         List<Vector3> common_vertices = n_vertices.Intersect(r_vertices).ToList();
 
-        //Triangulator triangulator = new Triangulator(common_vertices);
+        n_position /= n_vertices.Count;
+        r_position /= r_vertices.Count;
+        Debug.Log("position: " + n_position + ", " + r_position);
+        List<Vector3> pn_vertices = new List<Vector3>();
+        for (int i = 0; i < n_vertices.Count; ++i)
+        {
+            pn_vertices.Add(n_vertices[i]);
+            n_vertices[i] = n_vertices[i] - n_position;
+        }
+
+        for (int i = 0; i < r_vertices.Count; ++i)
+        {
+            r_vertices[i] = r_vertices[i] - r_position;
+        }
 
         var _mesh = new Mesh
         {
@@ -300,14 +326,18 @@ public class ObjectBehavior : MonoBehaviour {
         _mesh.RecalculateBounds();
 
         GameObject _obj = new GameObject();
+        _obj.transform.position = transform.position;
+        _obj.transform.position = r_position;
         var _meshRenderer = _obj.AddComponent<MeshRenderer>();
         _meshRenderer.material = new Material(m_rend.material);
         _meshRenderer.materials = m_rend.materials;
         var _filter = _obj.AddComponent<MeshFilter>();
         _filter.mesh = _mesh;
-        _obj.AddComponent<ObjectBehavior>();
+        ObjectBehavior _script = _obj.AddComponent<ObjectBehavior>();
         _obj.AddComponent<MeshCollider>();
-        _obj.name = "part_obj";
+        _obj.name = "body_obj";
+        _script.vertex_sphere = vertex_sphere;
+        
         gameObject.SetActive(false);
         
         var mesh = new Mesh
@@ -329,41 +359,59 @@ public class ObjectBehavior : MonoBehaviour {
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
         GameObject temp_obj = new GameObject();
+        temp_obj.transform.position = transform.position;
+        temp_obj.transform.position = n_position;
 
         // Set up game object with mesh;
         var meshRenderer = temp_obj.AddComponent<MeshRenderer>();
-        //meshRenderer.material = new Material(Shader.Find("Sprites/Default"));
         meshRenderer.material = new Material(m_rend.material);
         meshRenderer.materials = m_rend.materials;
-        //Debug.Log("material length: " + meshRenderer.materials.Length);
-
-        // split the texture of the object
-        /*
-        Texture2D origin_texture = (Texture2D)m_rend.material.mainTexture;
-        Color32[] origin_color = origin_texture.GetPixels32();
-        Debug.Log("triangle count: " + n_triangles.Count);
-        Debug.Log("uv count: " + m_mesh.uv.Length);
-        Debug.Log(m_normals.Count + "+" + mesh.normals.Length + " vs. " + origin_color.Length);
-        Color32[] n_color = ((Texture2D)meshRenderer.material.mainTexture).GetPixels32();
-        */
-        //Debug.Log(n_color.Length);
-        /*
-        for(int i = 0; i < origin_color.Length; i++)
-        {
-            n_color[i] = 
-        }
-        */
 
         var filter = temp_obj.AddComponent<MeshFilter>();
         filter.mesh = mesh;
-        temp_obj.AddComponent<ObjectBehavior>();
+        ObjectBehavior temp_script = temp_obj.AddComponent<ObjectBehavior>();
         temp_obj.AddComponent<MeshCollider>();
         temp_obj.name = "part_obj";
 
         GameObject p_obj = new GameObject();
+        p_obj.name = gameObject.name;
         _obj.transform.SetParent(p_obj.transform);
         temp_obj.transform.SetParent(p_obj.transform);
 
+        // Find common vertices between n_vertices and r_vertices, 
+        // and call the triangulate algorithm with those vertices 
+        Vector3 avg_normal = Vector3.zero;
+        for (int i = 0; i < common_vertices.Count; i++)
+        {
+            int index = Array.IndexOf(pn_vertices.ToArray(), common_vertices[i]);
+            avg_normal += mesh.normals[index];
+        }
+
+        // no intersections between the body and the part
+        if (common_vertices.Count == 0)
+        {
+            avg_normal = Vector3.down;
+        }
+        avg_normal /= common_vertices.Count;
+        Debug.Log(avg_normal.x + ", " + avg_normal.y + ", " + avg_normal.z);
+        Vector3 temp_world = temp_obj.transform.position;
+        Vector3 _world = _obj.transform.position;
+        if ((temp_world + avg_normal - _world).magnitude > (temp_world - _world).magnitude)
+        {
+            Debug.Log("normal magnitude: " + (temp_world + avg_normal - _world).magnitude);
+            Debug.Log("original magnitude: " + (temp_world - _world).magnitude);
+            Debug.Log("avg_normal magnitude: " + avg_normal.magnitude);
+            avg_normal *= -1;
+        }
+        temp_script.SetDirection(avg_normal);
+        temp_script.vertex_sphere = vertex_sphere;
+        //temp_obj.transform.position += avg_normal * 5.0f;
+        /*
+        m_anim = temp_obj.AddComponent<Animator>();
+        m_anim.SetFloat("speed", 0.4f);
+        m_anim.runtimeAnimatorController = Resources.Load("button_controller") 
+            as RuntimeAnimatorController;
+        */
         return temp_obj;
     }
 
@@ -448,6 +496,11 @@ public class ObjectBehavior : MonoBehaviour {
         }
     }
 
+    public void SetDirection(Vector3 d)
+    {
+        m_direction = d;
+    }
+
     // Use this for initialization
     void Start()
     {
@@ -475,6 +528,7 @@ public class ObjectBehavior : MonoBehaviour {
             m_vertices[i] = tr.TransformPoint(m_vertices[i]);
         }
 
+        m_anim = null;
         //m_rend.material.shader = Shader.Find("VertexColorUnlit2");
 
         //m_rend.material.renderQueue = 2002;
@@ -483,6 +537,7 @@ public class ObjectBehavior : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-      
+        // Lerp button click action
+        
     }
 }

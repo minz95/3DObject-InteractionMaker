@@ -134,6 +134,11 @@ public class GameSystem : MonoBehaviour {
                     {
                         for (int i = 0; i < selectedunits.Count; i++)
                         {
+                            if (selectedunits[i] == null)
+                            {
+                                selectedunits.Clear();
+                                break;
+                            }
                             selectedunits[i].transform.gameObject.GetComponent<vertex_sphere>().ChangeColorDefault();
                         }
                         selectedunits.Clear();
@@ -237,6 +242,11 @@ public class GameSystem : MonoBehaviour {
             for (int i = 0; i < UnitsOnScreenSpace.Count; i++)
             {
                 GameObject UnitObj = UnitsOnScreenSpace[i] as GameObject;
+                if(UnitObj == null)
+                {
+                    UnitsOnScreenSpace.Clear();
+                    break;
+                }
                 vertex_sphere PosScript = UnitObj.transform.GetComponent<vertex_sphere>();
                 //GameObject selectmarker = UnitObj.transform.Find("vertex_sphere").gameObject;
                 if (!UnitInDrag.Contains(UnitObj))
