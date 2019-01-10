@@ -29,8 +29,8 @@ public class ObjectBehavior : MonoBehaviour {
     int idleHash = Animator.StringToHash("Base Layer.Idle");
     Vector3 m_direction = Vector3.zero;
     float m_force = 0f;
-    float m_speed = 0.2f;
-    Vector3 currentLerp = Vector3.zero;
+    private Transform startPosition = null;
+    private Transform targetPosition = null;
     bool isPressing = false;
 
     void OnMouseDown()
@@ -499,6 +499,64 @@ public class ObjectBehavior : MonoBehaviour {
     public void SetDirection(Vector3 d)
     {
         m_direction = d;
+    }
+
+    private void FindBoundingBox(List<Vector3> vertices)
+    {
+        // find min/max of x, y, z each
+        Vector3 xminVertex = new Vector3(float.PositiveInfinity, float.PositiveInfinity,
+            float.PositiveInfinity);
+        Vector3 xmaxVertex = new Vector3(float.NegativeInfinity, float.NegativeInfinity,
+            float.NegativeInfinity);
+        Vector3 yminVertex = new Vector3(float.PositiveInfinity, float.PositiveInfinity,
+            float.PositiveInfinity);
+        Vector3 ymaxVertex = new Vector3(float.NegativeInfinity, float.NegativeInfinity,
+            float.NegativeInfinity);
+        Vector3 zminVertex = new Vector3(float.PositiveInfinity, float.PositiveInfinity,
+            float.PositiveInfinity);
+        Vector3 zmaxVertex = new Vector3(float.NegativeInfinity, float.NegativeInfinity,
+            float.NegativeInfinity);
+        List<Vector3> boundary = new List<Vector3>(6);
+
+        for (int i = 0; i < vertices.Count; i++)
+        {
+            if (vertices[i].x > xmaxVertex.x) xmaxVertex = vertices[i];
+            if (vertices[i].y > ymaxVertex.y) ymaxVertex = vertices[i];
+            if (vertices[i].x > zmaxVertex.z) zmaxVertex = vertices[i];
+
+            if (vertices[i].x < xminVertex.x) xminVertex = vertices[i];
+            if (vertices[i].y < yminVertex.y) yminVertex = vertices[i];
+            if (vertices[i].z < zminVertex.z) zminVertex = vertices[i];
+        }
+
+        boundary.Add(xminVertex);
+        boundary.Add(xmaxVertex);
+        boundary.Add(yminVertex);
+        boundary.Add(ymaxVertex);
+        boundary.Add(zminVertex);
+        boundary.Add(zmaxVertex);
+
+        float minBoundSize = -10000f;
+        Vector3[] minBoundingBox = new Vector3[2];
+        // translate each edges, and find the minimum bounding box
+        for (int i = 0; i < boundary.Count; i++)
+        {
+            for (int j = i + 1; j < boundary.Count; j++)
+            {
+                // if two vertices are the same, no edge exists
+                if (vertices[i] == vertices[j]) continue;
+
+                // transform vertices according to vertex i and j -> (0, 0, 0), (1, 0, 0)
+                xminVertex = (boundary[0] - vertices[i]);
+                xmaxVertex = (boundary[1] - vertices[i]);
+                yminVertex = (boundary[2] - vertices[i]);
+                ymaxVertex = (boundary[3] - vertices[i]);
+                zminVertex = (boundary[4] - vertices[i]);
+                zmaxVertex = (boundary[5] - vertices[i]);
+
+                // calculate the bounding box and remember if it is the minimum
+            }
+        }
     }
 
     // Use this for initialization
